@@ -28,7 +28,7 @@
 
 /* See the file "c4.c" for documentation on the following functions. */
 
-extern void    c4_poll(void (*poll_func)(void), clock_t interval);
+extern void    c4_poll(void(*poll_func)(void), clock_t interval);
 extern void    c4_new_game(int width, int height, int num);
 extern bool    c4_make_move(int player, int column, int *row);
 extern bool    c4_auto_move(int player, int level, int *column, int *row);
@@ -42,4 +42,4 @@ extern void    c4_reset(void);
 
 extern const char *c4_get_version(void);
 
-#endif /* C4_DEFINED */
+#endif /* C4_DEFINED */#pragma once
