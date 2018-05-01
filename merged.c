@@ -64,6 +64,7 @@ static void update_score(int player, int x, int y);
 static int drop_piece(int player, int column);
 static void push_state(void);
 static int evaluate(int player, int level, int alpha, int beta);
+static int rule(int player);
 static void *emalloc(size_t size);
 
 
@@ -101,7 +102,7 @@ main()
     c4_new_game(width, height, num_to_connect);
     c4_poll(print_dot, CLOCKS_PER_SEC/2);
 
-    do {
+    do {//형진이가 수정할 곳, 입력값은 착수점과 Search Algorithm(1) Rule(2), 2 선택시 어떤 rule 적용했는지도 출력 미친거 아냐
         print_board(width, height);
         if (player[turn] == HUMAN) {
             do {
@@ -713,6 +714,23 @@ evaluate(int player, int level, int alpha, int beta)
         /* What's good for the other player is bad for this one. */
         return -best;
     }
+}
+
+static int
+rule(int player){
+  /*  	승리인 경우 바로 돌을 놓고 게임 끝내기
+  	7자 모양이 존재하게 될(가로줄 대각선줄이 모두 존재할 수 있게 하는) 경우 00점
+  	가로 또는 대각선으로 세 개의 돌이 연속하여 존재하게 될 경우 00점
+  	세로로 세 개의 돌이 연속하여  존재하게 될 경우  00점
+  	상대방의 가로 또는 대각선으로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 00점
+  	상대방의 세로로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 00점
+  	가로, 대각선으로 이을수 있는 4칸의 여유가 있을 경우 00점
+  	다음 상대수에 의하여 무조건 패배인 경우 00점
+  	두개의 돌이 가로로 붙어 있고, 아래쪽이 벽면인 경우의 좌우 00점
+  	상대방이 내가 둘 수 위에 두어 승리할 수 있는 경우 두지 않음*/
+
+  if()
+
 }
 
 static void *
