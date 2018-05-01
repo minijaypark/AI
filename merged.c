@@ -11,31 +11,26 @@
 **                                                                        **
 ****************************************************************************
 **                                                                        **
-**  This file provides the functions necessary to implement a front-end-  **
-**  independent Connect-4 game.  Multiple board sizes are supported.      **
-**  It is also possible to specify the number of pieces necessary to      **
-**  connect in a row in order to win.  Therefore one can play Connect-3,  **
-**  Connect-5, etc.  An efficient tree-searching algorithm (making use    **
-**  of alpha-beta cutoff decisions) has been implemented to insure that   **
-**  the computer plays as quickly as possible.                            **
+**                          Sample Implementation!                        **
 **                                                                        **
-**  The declaration of the public functions necessary to use this file    **
-**  are contained in "c4.h".                                              **
+**  This code is poorly written and contains no internal documentation.   **
+**  Its sole purpose is to quickly demonstrate an actual implementation   **
+**  of the functions contained in the file "c4.c".  It's a fully working  **
+**  game which should work on any type of system, so give it a shot!      **
 **                                                                        **
-**  In all of the public functions (all of which have the "c4_" prefix),  **
-**  the value of player can be any integer, where an even integer refers  **
-**  to player 0 and an odd integer refers to player 1.                    **
+**  The computer is pretty brain-dead at level 3 or less, but at level 4  **
+**  and up it provides quite a challenge!                                 **
 **                                                                        **
 ****************************************************************************
-**  $Id: c4.c,v 3.11 2009/11/03 14:42:01 pomakis Exp pomakis $
+**  $Id: game.c,v 3.11 2009/11/03 14:42:16 pomakis Exp pomakis $
 ***************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
-#include "c4.h"
 #include <time.h>
 #include <stdbool.h>
 
@@ -46,6 +41,7 @@
 #define C4_NONE          2
 #define pop_state() \
         (current_state = &state_stack[--depth])
+#define C4_MAX_LEVEL    20
 
 /* The "goodness" of the current state with respect to a player is the */
 /* score of that player minus the score of the player's opponent.  A   */
@@ -54,6 +50,36 @@
 
 #define goodness_of(player) \
         (current_state->score[player] - current_state->score[other(player)])
+
+enum {HUMAN = 0, COMPUTER = 1};
+
+static int get_num(char *prompt, int lower, int upper, int default_val);
+static void print_board(int width, int height);
+static void print_dot(void);
+
+static char piece[2] = { 'X', 'O' };
+
+void    c4_poll(void (*poll_func)(void), clock_t interval);
+void    c4_new_game(int width, int height, int num);
+bool    c4_make_move(int player, int column, int *row);
+bool    c4_auto_move(int player, int level, int *column, int *row);
+char ** c4_board(void);
+int     c4_score_of_player(int player);
+bool    c4_is_winner(int player);
+bool    c4_is_tie(void);
+void    c4_win_coords(int *x1, int *y1, int *x2, int *y2);
+void    c4_end_game(void);
+void    c4_reset(void);
+
+
+/* Static global variables. */
+
+static int size_x, size_y, total_size;
+static int num_to_connect;
+static int win_places;
+
+static int ***map;  /* map[x][y] is an array of win place indices, */
+                    /* terminated by a -1.                         */
 
 /* A local struct which defines the state of a game. */
 
@@ -96,14 +122,6 @@ typedef struct {
 
 } Game_state;
 
-/* Static global variables. */
-
-static int size_x, size_y, total_size;
-static int num_to_connect;
-static int win_places;
-
-static int ***map;  /* map[x][y] is an array of win place indices, */
-                    /* terminated by a -1.                         */
 
 static int magic_win_number;
 static bool game_in_progress = false, move_in_progress = false;
@@ -124,6 +142,189 @@ static int drop_piece(int player, int column);
 static void push_state(void);
 static int evaluate(int player, int level, int alpha, int beta);
 static void *emalloc(size_t size);
+
+
+const char *c4_get_version(void);
+
+/***************************************************************************
+**                                                                        **
+**                          Connect-4 Algorithm                           **
+**                                                                        **
+**                              Version 3.11                              **
+**                                                                        **
+**                            By Keith Pomakis                            **
+**                          (pomakis@pobox.com)                           **
+**                                                                        **
+**                             November, 2009                             **
+**                                                                        **
+****************************************************************************
+**                                                                        **
+**  This file provides the functions necessary to implement a front-end-  **
+**  independent Connect-4 game.  Multiple board sizes are supported.      **
+**  It is also possible to specify the number of pieces necessary to      **
+**  connect in a row in order to win.  Therefore one can play Connect-3,  **
+**  Connect-5, etc.  An efficient tree-searching algorithm (making use    **
+**  of alpha-beta cutoff decisions) has been implemented to insure that   **
+**  the computer plays as quickly as possible.                            **
+**                                                                        **
+**  The declaration of the public functions necessary to use this file    **
+**  are contained in "c4.h".                                              **
+**                                                                        **
+**  In all of the public functions (all of which have the "c4_" prefix),  **
+**  the value of player can be any integer, where an even integer refers  **
+**  to player 0 and an odd integer refers to player 1.                    **
+**                                                                        **
+****************************************************************************
+**  $Id: c4.c,v 3.11 2009/11/03 14:42:01 pomakis Exp pomakis $
+***************************************************************************/
+
+
+int
+main()
+{
+    int player[2], level[2], turn = 0, num_of_players, move;
+    int width, height, num_to_connect;
+    int x1, y1, x2, y2;
+    char buffer[80];
+
+    width = 7;
+    height = 6;
+    num_to_connect = 4;
+
+    num_of_players = 1;
+
+    player[0] = HUMAN;
+    player[1] = COMPUTER;
+    level[1] = 10;
+    buffer[0] = '\0';
+    do {
+        printf("Would you like to go first [y]? ");
+        if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+            printf("\nGoodbye!\n");
+            exit(0);
+        }
+        buffer[0] = tolower(buffer[0]);
+    } while (buffer[0] != 'y' && buffer[0] != 'n' && buffer[0] != '\n');
+
+    turn = (buffer[0] == 'n')? 1 : 0;
+
+    c4_new_game(width, height, num_to_connect);
+    c4_poll(print_dot, CLOCKS_PER_SEC/2);
+
+    do {
+        print_board(width, height);
+        if (player[turn] == HUMAN) {
+            do {
+                if (num_of_players == 2)
+                    sprintf(buffer, "Player %c, drop in which column",
+                            piece[turn]);
+                else
+                    sprintf(buffer, "Drop in which column");
+                move = get_num(buffer, 1, width, -1) - 1;
+            }
+            while (!c4_make_move(turn, move, NULL));
+        }
+        else {
+            if (num_of_players == 1)
+                printf("Thinking.");
+            else
+                printf("Player %c is thinking.", piece[turn]);
+            fflush(stdout);
+            c4_auto_move(turn, level[turn], &move, NULL);
+            if (num_of_players == 1)
+                printf("\n\nI dropped my piece into column %d.\n", move+1);
+            else
+                printf("\n\nPlayer %c dropped its piece into column %d.\n",
+                       piece[turn], move+1);
+        }
+
+        turn = !turn;
+
+    } while (!c4_is_winner(0) && !c4_is_winner(1) && !c4_is_tie());
+
+    print_board(width, height);
+
+    if (c4_is_winner(0)) {
+        if (num_of_players == 1)
+            printf("You won!");
+        else
+            printf("Player %c won!", piece[0]);
+        c4_win_coords(&x1, &y1, &x2, &y2);
+        printf("  (%d,%d) to (%d,%d)\n\n", x1+1, y1+1, x2+1, y2+1);
+    }
+    else if (c4_is_winner(1)) {
+        if (num_of_players == 1)
+            printf("I won!");
+        else
+            printf("Player %c won!", piece[1]);
+        c4_win_coords(&x1, &y1, &x2, &y2);
+        printf("  (%d,%d) to (%d,%d)\n\n", x1+1, y1+1, x2+1, y2+1);
+    }
+    else {
+        printf("There was a tie!\n\n");
+    }
+
+    c4_end_game();
+    return 0;
+}
+
+
+static void
+print_board(int width, int height)
+{
+    int x, y;
+    char **board, spacing[2], dashing[2];
+
+    board = c4_board();
+
+    spacing[1] = dashing[1] = '\0';
+    if (width > 19) {
+        spacing[0] = '\0';
+        dashing[0] = '\0';
+    }
+    else {
+        spacing[0] = ' ';
+        dashing[0] = '-';
+    }
+
+    printf("\n");
+    for (y=height-1; y>=0; y--) {
+
+        printf("|");
+        for (x=0; x<width; x++) {
+            if (board[x][y] == C4_NONE)
+                printf("%s %s|", spacing, spacing);
+            else
+                printf("%s%c%s|", spacing, piece[(int)board[x][y]], spacing);
+        }
+        printf("\n");
+
+        printf("+");
+        for (x=0; x<width; x++)
+            printf("%s-%s+", dashing, dashing);
+        printf("\n");
+    }
+
+    printf(" ");
+    for (x=0; x<width; x++)
+        printf("%s%d%s ", spacing, (x>8)?(x+1)/10:x+1, spacing);
+    if (width > 9) {
+        printf("\n ");
+        for (x=0; x<width; x++)
+            printf("%s%c%s ", spacing, (x>8)?'0'+(x+1)-((x+1)/10)*10:' ',
+                              spacing);
+    }
+    printf("\n\n");
+}
+
+/****************************************************************************/
+
+static void
+print_dot(void)
+{
+    printf(".");
+    fflush(stdout);
+}
 
 
 /****************************************************************************/
@@ -689,7 +890,28 @@ num_of_win_places(int x, int y, int n)
 /**  a game piece in column x, row y.                                      **/
 /**                                                                        **/
 /****************************************************************************/
+static int
+get_num(char *prompt, int lower, int upper, int default_value)
+{
+   int number = -1;
+   int result;
+   static char numbuf[40];
 
+   do {
+      if (default_value != -1)
+         printf("%s [%d]? ", prompt, default_value);
+      else
+         printf("%s? ", prompt);
+
+      if (fgets(numbuf, sizeof(numbuf), stdin) == NULL || numbuf[0] == 'q') {
+         printf("\nGoodbye!\n");
+         exit(0);
+      }
+      result = sscanf(numbuf, "%d", &number);
+   } while (result == 0 || (result != EOF && (number<lower || number>upper)));
+
+   return ((result == EOF) ? default_value : number);
+}
 static void
 update_score(int player, int x, int y)
 {

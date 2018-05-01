@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "c4.h"
 
 enum {HUMAN = 0, COMPUTER = 1};
 
@@ -38,6 +37,20 @@ static void print_dot(void);
 
 static char piece[2] = { 'X', 'O' };
 
+void    c4_poll(void (*poll_func)(void), clock_t interval);
+void    c4_new_game(int width, int height, int num);
+bool    c4_make_move(int player, int column, int *row);
+bool    c4_auto_move(int player, int level, int *column, int *row);
+char ** c4_board(void);
+int     c4_score_of_player(int player);
+bool    c4_is_winner(int player);
+bool    c4_is_tie(void);
+void    c4_win_coords(int *x1, int *y1, int *x2, int *y2);
+void    c4_end_game(void);
+void    c4_reset(void);
+
+const char *c4_get_version(void);
+
 int
 main()
 {
@@ -46,46 +59,26 @@ main()
     int x1, y1, x2, y2;
     char buffer[80];
 
-    printf("\n****  Welcome to the game of Connect!  ****\n\n");
-    printf("By Keith Pomakis (pomakis@pobox.com)\n");
-    printf("April, 1998\n\n");
+    width = 7;
+    height = 6;
+    num_to_connect = 4;
 
-    width = get_num("Width of board", 1, 40, 7);
-    height = get_num("Height of board", 1, 40, 6);
-    num_to_connect = get_num("Number to connect", 1, 40, 4);
+    num_of_players = 1;
 
-    num_of_players = get_num("Number of human players (0, 1 or 2)", 0, 2, 1);
-    switch (num_of_players) {
+    player[0] = HUMAN;
+    player[1] = COMPUTER;
+    level[1] = 10;
+    buffer[0] = '\0';
+    do {
+        printf("Would you like to go first [y]? ");
+        if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+            printf("\nGoodbye!\n");
+            exit(0);
+        }
+        buffer[0] = tolower(buffer[0]);
+    } while (buffer[0] != 'y' && buffer[0] != 'n' && buffer[0] != '\n');
 
-        case 0:
-            player[0] = player[1] = COMPUTER;
-            level[0] = get_num("Skill level of player X", 1, C4_MAX_LEVEL, 5);
-            level[1] = get_num("Skill level of player O", 1, C4_MAX_LEVEL, 5);
-            turn = 0;
-            break;
-
-        case 1:
-            player[0] = HUMAN;
-            player[1] = COMPUTER;
-            level[1] = get_num("Skill level of computer", 1, C4_MAX_LEVEL, 5);
-            buffer[0] = '\0';
-            do {
-                printf("Would you like to go first [y]? ");
-                if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
-                    printf("\nGoodbye!\n");
-                    exit(0);
-                }
-                buffer[0] = tolower(buffer[0]);
-            } while (buffer[0] != 'y' && buffer[0] != 'n' && buffer[0] != '\n');
-
-            turn = (buffer[0] == 'n')? 1 : 0;
-            break;
-
-        case 2:
-            player[0] = player[1] = HUMAN;
-            turn = 0;
-            break;
-    }
+    turn = (buffer[0] == 'n')? 1 : 0;
 
     c4_new_game(width, height, num_to_connect);
     c4_poll(print_dot, CLOCKS_PER_SEC/2);
@@ -147,33 +140,6 @@ main()
     return 0;
 }
 
-
-/****************************************************************************/
-
-static int
-get_num(char *prompt, int lower, int upper, int default_value)
-{
-    int number = -1;
-    int result;
-    static char numbuf[40];
-
-    do {
-        if (default_value != -1)
-            printf("%s [%d]? ", prompt, default_value);
-        else
-            printf("%s? ", prompt);
-
-        if (fgets(numbuf, sizeof(numbuf), stdin) == NULL || numbuf[0] == 'q') {
-            printf("\nGoodbye!\n");
-            exit(0);
-        }
-        result = sscanf(numbuf, "%d", &number);
-    } while (result == 0 || (result != EOF && (number<lower || number>upper)));
-
-    return ((result == EOF)? default_value : number);
-}
-
-/****************************************************************************/
 
 static void
 print_board(int width, int height)
