@@ -1,30 +1,3 @@
-/***************************************************************************
-**                                                                        **
-**                          Connect-4 Algorithm                           **
-**                                                                        **
-**                              Version 3.11                              **
-**                                                                        **
-**                            By Keith Pomakis                            **
-**                          (pomakis@pobox.com)                           **
-**                                                                        **
-**                             November, 2009                             **
-**                                                                        **
-****************************************************************************
-**                                                                        **
-**                          Sample Implementation!                        **
-**                                                                        **
-**  This code is poorly written and contains no internal documentation.   **
-**  Its sole purpose is to quickly demonstrate an actual implementation   **
-**  of the functions contained in the file "c4.c".  It's a fully working  **
-**  game which should work on any type of system, so give it a shot!      **
-**                                                                        **
-**  The computer is pretty brain-dead at level 3 or less, but at level 4  **
-**  and up it provides quite a challenge!                                 **
-**                                                                        **
-****************************************************************************
-**  $Id: game.c,v 3.11 2009/11/03 14:42:16 pomakis Exp pomakis $
-***************************************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -34,29 +7,18 @@
 #include <time.h>
 #include <stdbool.h>
 
-/* Some macros for convenience. */
-
 #define other(x)        ((x) ^ 1)
 #define real_player(x)  ((x) & 1)
 #define C4_NONE          2
-#define pop_state() \
-        (current_state = &state_stack[--depth])
+#define pop_state()     (current_state = &state_stack[--depth])
 #define C4_MAX_LEVEL    20
-
-/* The "goodness" of the current state with respect to a player is the */
-/* score of that player minus the score of the player's opponent.  A   */
-/* positive value will result if the specified player is in a better   */
-/* situation than his/her opponent.                                    */
-
-#define goodness_of(player) \
-        (current_state->score[player] - current_state->score[other(player)])
+#define goodness_of(player)  (current_state->score[player] - current_state->score[other(player)])
 
 enum {HUMAN = 0, COMPUTER = 1};
 
 static int get_num(char *prompt, int lower, int upper, int default_val);
 static void print_board(int width, int height);
 static void print_dot(void);
-
 static char piece[2] = { 'X', 'O' };
 
 void    c4_poll(void (*poll_func)(void), clock_t interval);
@@ -71,57 +33,20 @@ void    c4_win_coords(int *x1, int *y1, int *x2, int *y2);
 void    c4_end_game(void);
 void    c4_reset(void);
 
-
-/* Static global variables. */
-
 static int size_x, size_y, total_size;
 static int num_to_connect;
 static int win_places;
 
-static int ***map;  /* map[x][y] is an array of win place indices, */
-                    /* terminated by a -1.                         */
-
-/* A local struct which defines the state of a game. */
+static int ***map;
 
 typedef struct {
 
-    char **board;           /* The board configuration of the game state.  */
-                            /* board[x][y] specifies the position of the   */
-                            /* xth column and the yth row of the board,    */
-                            /* where column and row numbering starts at 0. */
-                            /* (The 0th row is the bottom row.)            */
-                            /* A value of 0 specifies that the position is */
-                            /* occupied by a piece owned by player 0, a    */
-                            /* value of 1 specifies that the position is   */
-                            /* occupied by a piece owned by player 1, and  */
-                            /* a value of C4_NONE specifies that the       */
-                            /* position is unoccupied.                     */
-
-    int *(score_array[2]);  /* An array specifying statistics on both      */
-                            /* players.  score_array[0] specifies the      */
-                            /* statistics for player 0, while              */
-                            /* score_array[1] specifies the statistics for */
-                            /* player 1.                                   */
-
-    int score[2];           /* The actual scores of each player, deducible */
-                            /* from score_array, but kept separately for   */
-                            /* efficiency.  The score of player x is the   */
-                            /* sum of score_array[x].  A score is          */
-                            /* basically a function of how many winning    */
-                            /* positions are still available to the        */
-                            /* and how close he/she is to achieving each   */
-                            /* of these positions.                         */
-
-    short int winner;       /* The winner of the game - either 0, 1 or     */
-                            /* C4_NONE.  Deducible from score_array, but   */
-                            /* kept separately for efficiency.             */
-
-    int num_of_pieces;      /* The number of pieces currently occupying    */
-                            /* board spaces.  Deducible from board, but    */
-                            /* kept separately for efficiency.             */
-
+    char **board;
+    int *(score_array[2]);
+    int score[2];
+    short int winner;
+    int num_of_pieces;
 } Game_state;
-
 
 static int magic_win_number;
 static bool game_in_progress = false, move_in_progress = false;
@@ -134,8 +59,6 @@ static int depth;
 static int states_allocated = 0;
 static int *drop_order;
 
-/* A declaration of the local functions. */
-
 static int num_of_win_places(int x, int y, int n);
 static void update_score(int player, int x, int y);
 static int drop_piece(int player, int column);
@@ -145,39 +68,6 @@ static void *emalloc(size_t size);
 
 
 const char *c4_get_version(void);
-
-/***************************************************************************
-**                                                                        **
-**                          Connect-4 Algorithm                           **
-**                                                                        **
-**                              Version 3.11                              **
-**                                                                        **
-**                            By Keith Pomakis                            **
-**                          (pomakis@pobox.com)                           **
-**                                                                        **
-**                             November, 2009                             **
-**                                                                        **
-****************************************************************************
-**                                                                        **
-**  This file provides the functions necessary to implement a front-end-  **
-**  independent Connect-4 game.  Multiple board sizes are supported.      **
-**  It is also possible to specify the number of pieces necessary to      **
-**  connect in a row in order to win.  Therefore one can play Connect-3,  **
-**  Connect-5, etc.  An efficient tree-searching algorithm (making use    **
-**  of alpha-beta cutoff decisions) has been implemented to insure that   **
-**  the computer plays as quickly as possible.                            **
-**                                                                        **
-**  The declaration of the public functions necessary to use this file    **
-**  are contained in "c4.h".                                              **
-**                                                                        **
-**  In all of the public functions (all of which have the "c4_" prefix),  **
-**  the value of player can be any integer, where an even integer refers  **
-**  to player 0 and an odd integer refers to player 1.                    **
-**                                                                        **
-****************************************************************************
-**  $Id: c4.c,v 3.11 2009/11/03 14:42:01 pomakis Exp pomakis $
-***************************************************************************/
-
 
 int
 main()
@@ -326,49 +216,12 @@ print_dot(void)
     fflush(stdout);
 }
 
-
-/****************************************************************************/
-/**                                                                        **/
-/**  This function is used to specify a poll function and the interval at  **/
-/**  which it should be called.  A poll function can be used, for example, **/
-/**  to tend to any front-end interface tasks, such as updating graphics,  **/
-/**  etc.  The specified poll function should accept void and return void. **/
-/**  The interval unit is 1/CLOCKS_PER_SEC seconds of processor time.      **/
-/**  Therefore, specifying CLOCKS_PER_SEC as the interval will cause the   **/
-/**  poll function to be called once every second of processor time, while **/
-/**  specifying CLOCKS_PER_SEC/4 will cause it to be called once every     **/
-/**  1/4 second of processor time.                                         **/
-/**                                                                        **/
-/**  If no polling is required, the poll function can be specified as      **/
-/**  NULL.  This is the default.                                           **/
-/**                                                                        **/
-/**  This function can be called an arbitrary number of times throughout   **/
-/**  any game.                                                             **/
-/**                                                                        **/
-/**  It is illegal for the specified poll function to call the functions   **/
-/**  c4_make_move(), c4_auto_move(), c4_end_game() or c4_reset().          **/
-/**                                                                        **/
-/****************************************************************************/
-
 void
 c4_poll(void (*poll_func)(void), clock_t interval)
 {
     poll_function = poll_func;
     poll_interval = interval;
 }
-
-
-/****************************************************************************/
-/**                                                                        **/
-/**  This function sets up a new game.  This must be called exactly once   **/
-/**  before each game is started.  Before it can be called a second time,  **/
-/**  end_game() must be called to destroy the previous game.               **/
-/**                                                                        **/
-/**  width and height are the desired dimensions of the game board, while  **/
-/**  num is the number of pieces required to connect in a row in order to  **/
-/**  win the game.                                                         **/
-/**                                                                        **/
-/****************************************************************************/
 
 void
 c4_new_game(int width, int height, int num)
