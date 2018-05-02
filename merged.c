@@ -717,32 +717,471 @@ evaluate(int player, int level, int alpha, int beta)
 }
 static int
 rule(int player){
-  int value = 0;
+  int value[size_x];
+  int current_column;
+  int another_player = 1-player;
+  int result;
   //민이 파트
     for (int i = 0; i<size_x; i++) {
   		push_state();
   		current_column = drop_order[i];
-  		result = drop_piece(real_player, current_column);
+  		result = drop_piece(player, current_column);
       //승리인 경우 바로 돌을 놓고 게임 끝내기
-  		if (current_state->winner == real_player) {
-  			best_column = current_column;
+  		if (current_state->winner == player) {
   			pop_state();
-  			return;
+  			return i;
   		}
+      //다음 수에 상대방이 승리?
+      for (int j = 0; j<size_x; j++) {
+        push_state();
+        current_column = drop_order[j];
+        result = drop_piece(another_player, current_column);
+        if (current_state->winner == another_player) {
+          value[i]-=1000;
+          pop_state();
+          break;
+        }
+        pop_state();
+      }
       //7자 모양이 존재하게 될(가로줄 대각선줄이 모두 존재할 수 있게 하는) 경우 100점
-      if(current_state->board[current_column][y]==player)
-        value+=100;
-      //상대방의 가로 또는 대각선으로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 80점
-      if(current_state->board[current_column][y]!=player)
-        value+=80;
-      if()
-        value+=100;
-      if()
-        value+=60;
-  	/*다음 상대수에 의하여 무조건 패배인 경우 100점
+      if((current_column<size_x-2)&&(result>2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column+2][result]==
+          current_state->board[current_column+1][result-1]==
+          current_state->board[current_column][result-2]== player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column+1][result]==
+            current_state->board[current_column+2][result]==
+            current_state->board[current_column+1][result-1]==
+            current_state->board[current_column+2][result-2]== player)){
+          value[i]+=100;
+        }
+      }
+      if((current_column<size_x-1)&&(current_column>0)&&(result>2)){
+        if((current_state->board[current_column-1][result]==
+          current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column][result-1]==
+          current_state->board[current_column-1][result-2]== player)||
+          (current_state->board[current_column-1][result]==
+            current_state->board[current_column][result]==
+            current_state->board[current_column+1][result]==
+            current_state->board[current_column][result-1]==
+            current_state->board[current_column+1][result-2]== player)){
+              value[i]+=100;
+            }
+          }
+      if((current_column>1)&&(result>2)) {
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column-1][result]==
+          current_state->board[current_column-2][result]==
+          current_state->board[current_column-1][result-1]==
+          current_state->board[current_column-2][result-2]== player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column-1][result]==
+            current_state->board[current_column-2][result]==
+            current_state->board[current_column-1][result-1]==
+            current_state->board[current_column][result-2]== player)) {
+          value[i]+=100;
+        }
+      }
+      if((current_column>0)&&(current_column<size_x-1)&&(result>0)&&(result<size_y-1)) {
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column-1][result+1]==
+          current_state->board[current_column][result+1]==
+          current_state->board[current_column+1][result+1]==
+          current_state->board[current_column-1][result-1]== player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column-1][result+1]==
+            current_state->board[current_column][result+1]==
+            current_state->board[current_column+1][result+1]==
+            current_state->board[current_column+1][result-1]== player)) {
+          value[i]+=100;
+        }
+      }
+      if((current_column>0)&&(current_column<size_x-2)&&(result<size_y-2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column][result+2]==
+          current_state->board[current_column+1][result+2]==
+          current_state->board[current_column+2][result+2]==
+          current_state->board[current_column+1][result+1]== player)) {
+          value[i]+=100;
+        }
+      }
+      if((current_column>1)&&(result<size_y-2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column][result+2]==
+          current_state->board[current_column-1][result+2]==
+          current_state->board[current_column-2][result+2]==
+          current_state->board[current_column-1][result+1]== player)) {
+          value[i]+=100;
+        }
+      }
 
-  	가로 또는 대각선으로 세 개의 돌이 연속하여 존재하게 될 경우 60점 */
+      if((current_column<size_x-2)&&(result<size_y-2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column+2][result]==
+          current_state->board[current_column+1][result+1]==
+          current_state->board[current_column][result+2]== player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column+1][result]==
+            current_state->board[current_column+2][result]==
+            current_state->board[current_column+1][result+1]==
+            current_state->board[current_column+2][result+2]== player)){
+          value[i]+=100;
+        }
+      }
+      if((current_column<size_x-1)&&(current_column>0)&&(result<size_y-2)){
+        if((current_state->board[current_column-1][result]==
+          current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column][result+1]==
+          current_state->board[current_column-1][result+2]== player)||
+          (current_state->board[current_column-1][result]==
+            current_state->board[current_column][result]==
+            current_state->board[current_column+1][result]==
+            current_state->board[current_column][result+1]==
+            current_state->board[current_column+1][result+2]== player)){
+              value[i]+=100;
+            }
+          }
+      if((current_column>1)&&(result<size_y-2)) {
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column-1][result]==
+          current_state->board[current_column-2][result]==
+          current_state->board[current_column-1][result+1]==
+          current_state->board[current_column-2][result+2]== player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column-1][result]==
+            current_state->board[current_column-2][result]==
+            current_state->board[current_column-1][result+1]==
+            current_state->board[current_column][result+2]== player)) {
+          value[i]+=100;
+        }
+      }
+      if((current_column>0)&&(current_column<size_x-1)&&(result>0)&&(result<size_y-1)) {
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column-1][result-1]==
+          current_state->board[current_column][result-1]==
+          current_state->board[current_column+1][result-1]==
+          current_state->board[current_column-1][result+1]== player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column-1][result-1]==
+            current_state->board[current_column][result-1]==
+            current_state->board[current_column+1][result-1]==
+            current_state->board[current_column+1][result+1]== player)) {
+          value[i]+=100;
+        }
+      }
+      if((current_column>0)&&(current_column<size_x-2)&&(result>1)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column][result-2]==
+          current_state->board[current_column+1][result-2]==
+          current_state->board[current_column+2][result-2]==
+          current_state->board[current_column+1][result-1]== player)) {
+          value[i]+=100;
+        }
+      }
+      if((current_column>1)&&(result>1)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column][result-2]==
+          current_state->board[current_column-1][result-2]==
+          current_state->board[current_column-2][result-2]==
+          current_state->board[current_column-1][result-1]== player)) {
+          value[i]+=100;
+        }
+      }
+      //상대방의 가로 또는 대각선으로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 80점
+      if((current_column<size_x-2)&&(result>2)){
+              if((current_state->board[current_column][result]==
+                current_state->board[current_column+1][result]==
+                current_state->board[current_column+2][result]==
+                current_state->board[current_column+1][result-1]==
+                current_state->board[current_column][result-2]!= player)||
+                (current_state->board[current_column][result]==
+                  current_state->board[current_column+1][result]==
+                  current_state->board[current_column+2][result]==
+                  current_state->board[current_column+1][result-1]==
+                  current_state->board[current_column+2][result-2]!= player)){
+                value[i]+=80;
+              }
+            }
+      if((current_column<size_x-1)&&(current_column>0)&&(result>2)){
+        if((current_state->board[current_column-1][result]==
+          current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column][result-1]==
+          current_state->board[current_column-1][result-2]!= player)||
+          (current_state->board[current_column-1][result]==
+            current_state->board[current_column][result]==
+            current_state->board[current_column+1][result]==
+            current_state->board[current_column][result-1]==
+            current_state->board[current_column+1][result-2]!= player)){
+              value[i]+=80;
+            }
+          }
+      if((current_column>1)&&(result>2)) {
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column-1][result]==
+          current_state->board[current_column-2][result]==
+          current_state->board[current_column-1][result-1]==
+          current_state->board[current_column-2][result-2]!= player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column-1][result]==
+            current_state->board[current_column-2][result]==
+            current_state->board[current_column-1][result-1]==
+            current_state->board[current_column][result-2]!= player)) {
+          value[i]+=80;
+        }
+      }
+      if((current_column>0)&&(current_column<size_x-1)&&(result>0)&&(result<size_y-1)) {
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column-1][result+1]==
+          current_state->board[current_column][result+1]==
+          current_state->board[current_column+1][result+1]==
+          current_state->board[current_column-1][result-1]!= player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column-1][result+1]==
+            current_state->board[current_column][result+1]==
+            current_state->board[current_column+1][result+1]==
+            current_state->board[current_column+1][result-1]!= player)) {
+          value[i]+=80;
+        }
+      }
+      if((current_column>0)&&(current_column<size_x-2)&&(result<size_y-2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column][result+2]==
+          current_state->board[current_column+1][result+2]==
+          current_state->board[current_column+2][result+2]==
+          current_state->board[current_column+1][result+1]!= player)) {
+          value[i]+=80;
+        }
+      }
+      if((current_column>1)&&(result<size_y-2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column][result+2]==
+          current_state->board[current_column-1][result+2]==
+          current_state->board[current_column-2][result+2]==
+          current_state->board[current_column-1][result+1]!= player)) {
+          value[i]+=80;
+        }
+      }
+
+      if((current_column<size_x-2)&&(result<size_y-2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column+2][result]==
+          current_state->board[current_column+1][result+1]==
+          current_state->board[current_column][result+2]!= player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column+1][result]==
+            current_state->board[current_column+2][result]==
+            current_state->board[current_column+1][result+1]==
+            current_state->board[current_column+2][result+2]!= player)){
+          value[i]+=80;
+        }
+      }
+      if((current_column<size_x-1)&&(current_column>0)&&(result<size_y-2)){
+        if((current_state->board[current_column-1][result]==
+          current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column][result+1]==
+          current_state->board[current_column-1][result+2]!= player)||
+          (current_state->board[current_column-1][result]==
+            current_state->board[current_column][result]==
+            current_state->board[current_column+1][result]==
+            current_state->board[current_column][result+1]==
+            current_state->board[current_column+1][result+2]!= player)){
+              value[i]+=80;
+            }
+          }
+      if((current_column>1)&&(result<size_y-2)) {
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column-1][result]==
+          current_state->board[current_column-2][result]==
+          current_state->board[current_column-1][result+1]==
+          current_state->board[current_column-2][result+2]!= player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column-1][result]==
+            current_state->board[current_column-2][result]==
+            current_state->board[current_column-1][result+1]==
+            current_state->board[current_column][result+2]!= player)) {
+          value[i]+=80;
+        }
+      }
+      if((current_column>0)&&(current_column<size_x-1)&&(result>0)&&(result<size_y-1)) {
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column-1][result-1]==
+          current_state->board[current_column][result-1]==
+          current_state->board[current_column+1][result-1]==
+          current_state->board[current_column-1][result+1]!= player)||
+          (current_state->board[current_column][result]==
+            current_state->board[current_column-1][result-1]==
+            current_state->board[current_column][result-1]==
+            current_state->board[current_column+1][result-1]==
+            current_state->board[current_column+1][result+1]!= player)) {
+          value[i]+=80;
+        }
+      }
+      if((current_column>0)&&(current_column<size_x-2)&&(result>1)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column][result-2]==
+          current_state->board[current_column+1][result-2]==
+          current_state->board[current_column+2][result-2]==
+          current_state->board[current_column+1][result-1]!= player)) {
+          value[i]+=80;
+        }
+      }
+      if((current_column>1)&&(result>1)){
+          if((current_state->board[current_column][result]==
+            current_state->board[current_column][result-2]==
+            current_state->board[current_column-1][result-2]==
+            current_state->board[current_column-2][result-2]==
+            current_state->board[current_column-1][result-1]!= player)) {
+            value[i]+=80;
+        }
+      }
+      //가로 또는 대각선으로 세 개의 돌이 연속하여 존재하게 될 경우 60점
+      //가로
+      if((current_column<size_x-2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column+2][result]==player)) {
+          value[i]+=60;
+        }
+      }
+      if((current_column<size_x-1)&&(current_column>0)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column-1][result]==player)) {
+          value[i]+=60;
+        }
+      }
+      if((current_column<size_x)&&(current_column>1)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column-1][result]==player)) {
+          value[i]+=60;
+        }
+      }
+      // /대각선
+      if((current_column<size_x-2)&&(result<size_y-2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result+1]==
+          current_state->board[current_column+2][result+2]==player)) {
+          value[i]+=60;
+        }
+      }
+      if((current_column>0)&&(current_column<size_x-1)&&(result>1)&&(result<size_y-1)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result+1]==
+          current_state->board[current_column-1][result-1]==player)) {
+          value[i]+=60;
+        }
+      }
+      if((current_column>1)&&(result>2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column-1][result-1]==
+          current_state->board[current_column-2][result-2]==player)) {
+          value[i]+=60;
+        }
+      }
+
+    // 반대 대각선
+    if((current_column<size_x-2)&&(result>2)){
+      if((current_state->board[current_column][result]==
+        current_state->board[current_column+1][result-1]==
+        current_state->board[current_column+2][result-2]==player)) {
+        value[i]+=60;
+      }
+    }
+    if((current_column>0)&&(current_column<size_x-1)&&(result>1)&&(result<size_y-1)){
+      if((current_state->board[current_column][result]==
+        current_state->board[current_column+1][result-1]==
+        current_state->board[current_column-1][result+1]==player)) {
+        value[i]+=60;
+      }
+    }
+    if((current_column>1)&&(result<size_y-2)){
+      if((current_state->board[current_column][result]==
+        current_state->board[current_column-1][result+1]==
+        current_state->board[current_column-2][result+2]==player)) {
+        value[i]+=60;
+      }
+    }
+    //상대방의 가로나 대각선 저지
+    //가로
+      if((current_column<size_x-2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column+2][result]!=player)) {
+          value[i]+=50;
+        }
+      }
+      if((current_column<size_x-1)&&(current_column>0)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column-1][result]!=player)) {
+          value[i]+=50;
+        }
+      }
+      if((current_column<size_x)&&(current_column>1)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result]==
+          current_state->board[current_column-1][result]!=player)) {
+          value[i]+=50;
+        }
+      }
+      // /대각선
+      if((current_column<size_x-2)&&(result<size_y-2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result+1]==
+          current_state->board[current_column+2][result+2]!=player)) {
+          value[i]+=50;
+        }
+      }
+      if((current_column>0)&&(current_column<size_x-1)&&(result>1)&&(result<size_y-1)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column+1][result+1]==
+          current_state->board[current_column-1][result-1]!=player)) {
+          value[i]+=50;
+        }
+      }
+      if((current_column>1)&&(result>2)){
+        if((current_state->board[current_column][result]==
+          current_state->board[current_column-1][result-1]==
+          current_state->board[current_column-2][result-2]!=player)) {
+          value[i]+=50;
+        }
+      }
+
+    // 반대 대각선
+    if((current_column<size_x-2)&&(result>2)){
+      if((current_state->board[current_column][result]==
+        current_state->board[current_column+1][result-1]==
+        current_state->board[current_column+2][result-2]!=player)) {
+        value[i]+=50;
+      }
+    }
+    if((current_column>0)&&(current_column<size_x-1)&&(result>1)&&(result<size_y-1)){
+      if((current_state->board[current_column][result]==
+        current_state->board[current_column+1][result-1]==
+        current_state->board[current_column-1][result+1]!=player)) {
+        value[i]+=50;
+      }
+    }
+    if((current_column>1)&&(result<size_y-2)){
+      if((current_state->board[current_column][result]==
+        current_state->board[current_column-1][result+1]==
+        current_state->board[current_column-2][result+2]!=player)) {
+        value[i]+=50;
+      }
+    }
+    pop_state();
   }
+
 /* 소영이 파트
     상대방의 세로로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 40점
   	두개의 돌이 가로로 붙어 있고, 아래쪽이 벽면인 경우의 좌우 40점
