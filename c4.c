@@ -233,6 +233,7 @@ c4_new_game(int width, int height, int num)
 	win_index = 0;
 
   //win_indices랑 win_index 이친구 뭐하는 애인지 설명좀ㅠㅠ
+  //update_score(int player, int x, int y) 이 함수 보면 알 수도 있는데, 나는 모르겠다...
 	/* Fill in the horizontal win positions */
   for (i = 0; i<size_y; i++)//0부터 5까지
 		for (j = 0; j<size_x - num_to_connect + 1; j++) {//0부터 3까지

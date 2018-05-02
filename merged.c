@@ -730,9 +730,17 @@ rule(int player){
   			return;
   		}
       //7자 모양이 존재하게 될(가로줄 대각선줄이 모두 존재할 수 있게 하는) 경우 100점
-
+      if(current_state->board[current_column][y]==player)
+        value+=100;
+      //상대방의 가로 또는 대각선으로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 80점
+      if(current_state->board[current_column][y]!=player)
+        value+=80;
+      if()
+        value+=100;
+      if()
+        value+=60;
   	/*다음 상대수에 의하여 무조건 패배인 경우 100점
-  	상대방의 가로 또는 대각선으로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 80점
+
   	가로 또는 대각선으로 세 개의 돌이 연속하여 존재하게 될 경우 60점 */
   }
 /* 소영이 파트
