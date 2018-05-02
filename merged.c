@@ -715,12 +715,18 @@ evaluate(int player, int level, int alpha, int beta)
         return -best;
     }
 }
+//리턴값은 착수할 column 값
 static int
 rule(int player){
   int value[size_x];
   int current_column;
   int another_player = 1-player;
   int result;
+
+  for(int k=0;k<size_x;k++)
+    value[k] = 0;
+  int value = 0;
+
   //민이 파트
     for (int i = 0; i<size_x; i++) {
   		push_state();
@@ -1190,7 +1196,11 @@ rule(int player){
   	상대방이 내가 둘 수 위에 두어 승리할 수 있는 경우 두지 않음 -200점
 
     */
-
+    for(int k=1;k<size_x;k++){
+      if(value[k]>value[value])
+        value = k;
+    }
+    return value;
 }
 
 static void *
