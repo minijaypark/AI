@@ -182,7 +182,7 @@ c4_new_game(int width, int height, int num)
 	total_size = width * height;
 	num_to_connect = num;
 	magic_win_number = 1 << num_to_connect;
-	win_places = num_of_win_places(size_x, size_y, num_to_connect);
+	win_places = num_of_win_places(size_x, size_y, num_to_connect);//69
 
 	/* Set up a random seed for making random decisions when there is */
 	/* equal goodness between two moves.                              */
@@ -193,7 +193,7 @@ c4_new_game(int width, int height, int num)
 	}
 
 	/* Set up the board */
-
+  //board를 이차원 배열로 선언하는 과정
 	depth = 0;
 	current_state = &state_stack[0];
 
@@ -205,14 +205,14 @@ c4_new_game(int width, int height, int num)
 	}
 
 	/* Set up the score array */
-
+  //score_array를 2*69짜리 2차원 배열로 선언하여 모든 값을 정수 1로 초기화.
 	current_state->score_array[0] = (int *)emalloc(win_places * sizeof(int));
 	current_state->score_array[1] = (int *)emalloc(win_places * sizeof(int));
 	for (i = 0; i<win_places; i++) {
 		current_state->score_array[0][i] = 1;
 		current_state->score_array[1][i] = 1;
 	}
-
+  //초기화 1로 하기 무색하게 첫 값을 69로 바꿈;
 	current_state->score[0] = current_state->score[1] = win_places;
 	current_state->winner = C4_NONE;
 	current_state->num_of_pieces = 0;
@@ -220,7 +220,7 @@ c4_new_game(int width, int height, int num)
 	states_allocated = 1;
 
 	/* Set up the map */
-
+  //3차원 배열 map 선언 (가로*세로*5)
 	map = (int ***)emalloc(size_x * sizeof(int **));
 	for (i = 0; i<size_x; i++) {
 		map[i] = (int **)emalloc(size_y * sizeof(int *));
@@ -232,11 +232,12 @@ c4_new_game(int width, int height, int num)
 
 	win_index = 0;
 
+  //win_indices랑 win_index 이친구 뭐하는 애인지 설명좀ㅠㅠ
 	/* Fill in the horizontal win positions */
-	for (i = 0; i<size_y; i++)
-		for (j = 0; j<size_x - num_to_connect + 1; j++) {
-			for (k = 0; k<num_to_connect; k++) {
-				win_indices = map[j + k][i];
+  for (i = 0; i<size_y; i++)//0부터 5까지
+		for (j = 0; j<size_x - num_to_connect + 1; j++) {//0부터 3까지
+			for (k = 0; k<num_to_connect; k++) {//0부터 3까지, k+j하면 0부터 6까지가 나온다.
+				win_indices = map[j + k][i];//map[x][y]
 				for (x = 0; win_indices[x] != -1; x++)
 					;
 				win_indices[x++] = win_index;
@@ -290,12 +291,18 @@ c4_new_game(int width, int height, int num)
 	/* By ordering the search such that the central columns are   */
 	/* tried first, alpha-beta cutoff is much more effective.     */
 
-	drop_order = (int *)emalloc(size_x * sizeof(int));
-	column = (size_x - 1) / 2;
-	for (i = 1; i <= size_x; i++) {
+	drop_order = (int *)emalloc(size_x * sizeof(int));//가로크기만큼 할당
+	column = (size_x - 1) / 2; //3
+	for (i = 1; i <= size_x; i++) {//1부터 7까지
 		drop_order[i - 1] = column;
-		column += ((i % 2) ? i : -i);
+		column += ((i % 2) ? i : -i);//홀수 column이면 -i, 짝수 column이면 +i
 	}
+  /*
+  우리판에서 초기화하면
+  drop_order  0 1 2 3 4 5 6
+  value       7 7 7 7 7 7 7
+  이런 식으로 생김.
+  */
 
 	game_in_progress = true;
 }
@@ -348,7 +355,7 @@ c4_make_move(int player, int column, int *row)
 
 bool
 c4_auto_move(int player, int level, int *column, int *row)
-{
+{//c4_auto_move(turn, level[turn], &move, NULL); in game.c
 	int best_column = -1, goodness = 0, best_worst = -(INT_MAX);
 	int num_of_equal = 0, real_player, current_column, result;
 
@@ -362,6 +369,7 @@ c4_auto_move(int player, int level, int *column, int *row)
 	/* of connect-4 is the center column.  See Victor Allis' masters thesis */
 	/* ("ftp://ftp.cs.vu.nl/pub/victor/connect4.ps") for this proof.        */
 
+  //이 if문에서 *선공* 첫 턴은 가운데에 두지 않는다는 설정으로 바꿔줘
 	if (current_state->num_of_pieces < 2 &&
 		size_x == 7 && size_y == 6 && num_to_connect == 4 &&
 		(current_state->num_of_pieces == 0 ||
@@ -665,17 +673,18 @@ c4_get_version(void)
 /**  row in order to win.                                                  **/
 /**                                                                        **/
 /****************************************************************************/
-
+//num_of_win_places(size_x, size_y, num_to_connect);와 같이 쓰인다
+//우리의 경우에는 num_of_win_places(7, 6, 4);
 static int
 num_of_win_places(int x, int y, int n)
 {
 	if (x < n && y < n)
 		return 0;
-	else if (x < n)
+	else if (x < n)//가로로 짧을 경우
 		return x * ((y - n) + 1);
-	else if (y < n)
+	else if (y < n)//세로로 짧을 경우
 		return y * ((x - n) + 1);
-	else
+	else//판이 충분히 넓을 경우, 우리의 경우에는 69. 띠용?
 		return 4 * x*y - 3 * x*n - 3 * y*n + 3 * x + 3 * y - 4 * n + 2 * n*n + 2;
 }
 

@@ -715,18 +715,28 @@ evaluate(int player, int level, int alpha, int beta)
         return -best;
     }
 }
-bool c4_win(/* arguments */) {
-  /* code */
-}
 static int
 rule(int player){
-  /*
-    승리인 경우 바로 돌을 놓고 게임 끝내기
-  	7자 모양이 존재하게 될(가로줄 대각선줄이 모두 존재할 수 있게 하는) 경우 100점
-  	다음 상대수에 의하여 무조건 패배인 경우 100점
+  int value = 0;
+  //민이 파트
+    for (int i = 0; i<size_x; i++) {
+  		push_state();
+  		current_column = drop_order[i];
+  		result = drop_piece(real_player, current_column);
+      //승리인 경우 바로 돌을 놓고 게임 끝내기
+  		if (current_state->winner == real_player) {
+  			best_column = current_column;
+  			pop_state();
+  			return;
+  		}
+      //7자 모양이 존재하게 될(가로줄 대각선줄이 모두 존재할 수 있게 하는) 경우 100점
+
+  	/*다음 상대수에 의하여 무조건 패배인 경우 100점
   	상대방의 가로 또는 대각선으로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 80점
-  	가로 또는 대각선으로 세 개의 돌이 연속하여 존재하게 될 경우 60점
-  	상대방의 세로로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 40점
+  	가로 또는 대각선으로 세 개의 돌이 연속하여 존재하게 될 경우 60점 */
+  }
+/* 소영이 파트
+    상대방의 세로로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 40점
   	두개의 돌이 가로로 붙어 있고, 아래쪽이 벽면인 경우의 좌우 40점
   	세로로 세 개의 돌이 연속하여 존재하게 될 경우  10점
   	가로, 대각선으로 이을수 있는 4칸의 여유가 있을 경우 5점
