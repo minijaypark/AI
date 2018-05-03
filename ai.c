@@ -74,6 +74,7 @@ int
 main()
 {
 	int player[2], level[2], turn = 0, num_of_players, move;
+	int heuristic = 1;//rule 추가
 	int width, height, num_to_connect;
 	int x1, y1, x2, y2;
 	char buffer[80];
@@ -114,13 +115,31 @@ main()
 				move = get_num(buffer, 1, width, -1) - 1;
 			} while (!c4_make_move(turn, move, NULL));
 		}
+		//컴퓨터차례
 		else {
-			if (num_of_players == 1)
-				printf("Thinking.");
+			if (num_of_players == 1) {
+				printf("Thinking.\n");
+				do {
+					printf("Search Algorithm[1] / Rule[2] ?");
+					if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+						printf("\nGoodbye!\n");
+						exit(0);
+					}
+					buffer[0] = tolower(buffer[0]);
+				} while (buffer[0] != '1' && buffer[0] != '2' && buffer[0] != '\n');
+				heuristic = strtol(buffer,NULL,10);
+				//printf("%d is in buffer", rule); 잘되나 확인
+
+			}
 			else
 				printf("Player %c is thinking.", piece[turn]);
 			fflush(stdout);
-			c4_auto_move(turn, level[turn], &move, NULL);
+			if (heuristic == 1)//search algorithm 사용시
+				c4_auto_move(turn, level[turn], &move, NULL);
+			else {// rule 사용시
+				move = rule(turn);// 이렇게 하면 안됨 rule_move(turn,rule(turn) 한거 인트로 받기, NULL)
+				c4_make_move(turn, move, NULL);
+			}
 			if (num_of_players == 1)
 				printf("\n\nI dropped my piece into column %d.\n", move + 1);
 			else
