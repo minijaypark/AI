@@ -1270,7 +1270,7 @@ rule(int player) {
 			}
 		}
 
-		//가로, 대각선으로 이을수 있는 4칸의 여유가 있을 경우 5점 
+		//가로, 대각선으로 이을수 있는 4칸의 여유가 있을 경우 5점
 		//가로
 		if ((current_column < 4)) {
 			if ((current_state->board[current_column + 1][result] ==
@@ -1389,7 +1389,7 @@ rule(int player) {
 		if (value[k]>value[value_int])
 			value_int = k;
 	}
-	return value;
+	return value_int;
 }
 
 static void *
@@ -1402,4 +1402,4 @@ emalloc(size_t size)
 		exit(1);
 	}
 	return ptr;
-} 
+}
