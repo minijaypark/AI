@@ -1275,7 +1275,7 @@ rule(int player) {
 		if ((current_column < 4)) {
 			if ((current_state->board[current_column + 1][result] ==
 				current_state->board[current_column + 2][result] ==
-				current_state->board[current_column + 3][result] == NULL)) {
+				current_state->board[current_column + 3][result] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1283,7 +1283,7 @@ rule(int player) {
 		if ((current_column < 7) && (current_column>2)) {
 			if ((current_state->board[current_column - 1][result] ==
 				current_state->board[current_column - 2][result] ==
-				current_state->board[current_column - 3][result] == NULL)) {
+				current_state->board[current_column - 3][result] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1291,7 +1291,7 @@ rule(int player) {
 		if ((current_column < 5) && (current_column>0)) {
 			if ((current_state->board[current_column - 1][result] ==
 				current_state->board[current_column + 1][result] ==
-				current_state->board[current_column + 2][result] == NULL)) {
+				current_state->board[current_column + 2][result] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1299,7 +1299,7 @@ rule(int player) {
 		if ((current_column < 6) && (current_column>3)) {
 			if ((current_state->board[current_column - 2][result] ==
 				current_state->board[current_column - 1][result] ==
-				current_state->board[current_column + 1][result] == NULL)) {
+				current_state->board[current_column + 1][result] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1307,7 +1307,7 @@ rule(int player) {
 		if ((current_column<4) && (result<3)) {
 			if ((current_state->board[current_column + 1][result + 1] ==
 				current_state->board[current_column + 2][result + 2] ==
-				current_state->board[current_column + 3][result + 3] == NULL)) {
+				current_state->board[current_column + 3][result + 3] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1315,7 +1315,7 @@ rule(int player) {
 		if ((current_column<7) && (current_column>2) && (result<6) && (result>2)) {
 			if ((current_state->board[current_column - 1][result - 1] ==
 				current_state->board[current_column - 2][result - 2] ==
-				current_state->board[current_column - 3][result - 3] == NULL)) {
+				current_state->board[current_column - 3][result - 3] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1323,7 +1323,7 @@ rule(int player) {
 		if ((current_column<6) && (current_column>1) && (result<5) && (result>1)) {
 			if ((current_state->board[current_column - 1][result - 1] ==
 				current_state->board[current_column - 2][result - 2] ==
-				current_state->board[current_column + 1][result + 1] == NULL)) {
+				current_state->board[current_column + 1][result + 1] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1331,7 +1331,7 @@ rule(int player) {
 		if ((current_column<5) && (current_column>0) && (result<4) && (result>0)) {
 			if ((current_state->board[current_column - 1][result - 1] ==
 				current_state->board[current_column + 2][result + 2] ==
-				current_state->board[current_column + 1][result + 1] == NULL)) {
+				current_state->board[current_column + 1][result + 1] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1339,7 +1339,7 @@ rule(int player) {
 		if ((current_column < 4) && (result>2)) {
 			if ((current_state->board[current_column - 1][result - 1] ==
 				current_state->board[current_column - 2][result - 2] ==
-				current_state->board[current_column - 3][result - 3] == NULL)) {
+				current_state->board[current_column - 3][result - 3] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1347,7 +1347,7 @@ rule(int player) {
 		if ((current_column<7) && (current_column>2) && (result<4)) {
 			if ((current_state->board[current_column - 1][result + 1] ==
 				current_state->board[current_column - 2][result + 2] ==
-				current_state->board[current_column - 3][result + 3] == NULL)) {
+				current_state->board[current_column - 3][result + 3] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1355,7 +1355,7 @@ rule(int player) {
 		if ((current_column<5) && (current_column>0) && (result<5) && (result>1)) {
 			if ((current_state->board[current_column - 1][result + 1] ==
 				current_state->board[current_column + 2][result - 2] ==
-				current_state->board[current_column + 1][result - 1] == NULL)) {
+				current_state->board[current_column + 1][result - 1] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
@@ -1363,7 +1363,7 @@ rule(int player) {
 		if ((current_column<6) && (current_column>1) && (result<4) && (result>0)) {
 			if ((current_state->board[current_column - 1][result + 1] ==
 				current_state->board[current_column - 2][result + 2] ==
-				current_state->board[current_column + 1][result - 1] == NULL)) {
+				current_state->board[current_column + 1][result - 1] == C4_NONE)) {
 				value[i] += 5;
 			}
 		}
