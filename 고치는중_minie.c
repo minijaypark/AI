@@ -137,7 +137,7 @@ main()
 			if (heuristic == 1)//search algorithm 사용시
 				c4_auto_move(turn, level[turn], &move, NULL);
 			else {// rule 사용시
-				move = rule(turn);// 이렇게 하면 안됨 rule_move(turn,rule(turn) 한거 인트로 받기, NULL)
+				move = rule(turn);
 				printf("column: %d\n", move);
 				c4_make_move(turn, move, NULL);
 			}
@@ -394,11 +394,21 @@ c4_auto_move(int player, int level, int *column, int *row)
 		size_x == 7 && size_y == 6 && num_to_connect == 4 &&
 		(current_state->num_of_pieces == 0 ||
 			current_state->board[3][0] != C4_NONE)) {
-		if (column != NULL)
-			*column = 3;
-		if (row != NULL)
-			*row = current_state->num_of_pieces;
-		drop_piece(real_player, 3);
+		if (current_state->num_of_pieces == 0) {// 첫수에 4는 안됨
+			result = drop_piece(real_player, 2);
+			if (column != NULL)
+				*column = 2;
+			if (row != NULL)
+				*row = result;
+		}
+		else
+		{
+			if (column != NULL)
+				*column = 3;
+			if (row != NULL)
+				*row = current_state->num_of_pieces;
+			drop_piece(real_player, 3);
+		}
 		return true;
 	}
 
@@ -746,635 +756,700 @@ rule(int player) {
 		value[k] = 0;
 
 	int value_int = 0;
-	for(int p=0;p<6;p++){
-		for(int l=0;l<7;l++)
+	for (int p = 0; p<6; p++) {
+		for (int l = 0; l<7; l++)
 			printf("%d ", current_state->board[l][p]);
 		printf("\n");
 	}
 
-	printf("player: %d, another player: %d \n", player, another_player);
-
-	for(int i=0;i<7;i++){
-	//printf("player: %d, another player: %d\n", player, another_player);
+	//int i = 2; 실험용 이제는 필요없음
+	printf("player: %d, another player: %d\n", player, another_player);
 	//민이 파트
-	//for (int i = 0; i<7; i++) {
-		push_state();
-		current_column = i;
-		result = drop_piece(player, current_column);
+	if (current_state->num_of_pieces == 0) return 2;
 
-		//승리인 경우 바로 돌을 놓고 게임 끝내기
-		if (current_state->winner == player) {
-			printf("go go %d\n", i);
-			pop_state();
-			return i;
-		}
-		//7자 모양이 존재하게 될(가로줄 대각선줄이 모두 존재할 수 있게 하는) 경우 100점
-		if ((current_column<7 - 2) && (result>2)) {
-			if ((current_state->board[current_column + 1][result] == player &&
+	for (int i = 0; i<7; i++) {
+	push_state();// 내 현재 상태 저장, 현재 상태와 같은 새판에서 simulation
+	current_column = i;
+	result = drop_piece(player, current_column);//row 값
+
+	//승리인 경우 바로 돌을 놓고 게임 끝내기
+	if (current_state->winner == player) {
+		printf("go go %d\n", i);
+		pop_state();
+		return i;
+	}
+	//7자 모양이 존재하게 될(가로줄 대각선줄이 모두 존재할 수 있게 하는) 경우 100점
+	if ((current_column<7 - 2) && (result>2)) {// current column i 값 result row 
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result] == player &&
+			current_state->board[current_column + 2][result] == player &&
+			current_state->board[current_column + 1][result - 1] == player &&
+			current_state->board[current_column][result - 2] == player) ||
+			(current_state->board[current_column][result] == player &&
+				current_state->board[current_column + 1][result] == player &&
 				current_state->board[current_column + 2][result] == player &&
 				current_state->board[current_column + 1][result - 1] == player &&
-				current_state->board[current_column][result - 2] == player) ||
-				(	current_state->board[current_column + 1][result] == player &&
-					current_state->board[current_column + 2][result] == player &&
-					current_state->board[current_column + 1][result - 1] == player &&
-					current_state->board[current_column + 2][result - 2] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+				current_state->board[current_column + 2][result - 2] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		if ((current_column<7 - 1) && (current_column>0) && (result>2)) {
-			if ((current_state->board[current_column - 1][result] == player &&
+	}
+	if ((current_column<7 - 1) && (current_column>0) && (result>2)) {
+		if ((current_state->board[current_column - 1][result] == player &&
+			current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result] == player &&
+			current_state->board[current_column][result - 1] == player &&
+			current_state->board[current_column - 1][result - 2] == player) ||
+			(current_state->board[current_column - 1][result] == player &&
+				current_state->board[current_column][result] == player &&
 				current_state->board[current_column + 1][result] == player &&
 				current_state->board[current_column][result - 1] == player &&
-				current_state->board[current_column - 1][result - 2] == player) ||
-				(current_state->board[current_column - 1][result] == player &&
-						current_state->board[current_column + 1][result] == player &&
-					current_state->board[current_column][result - 1] == player &&
-					current_state->board[current_column + 1][result - 2] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+				current_state->board[current_column + 1][result - 2] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		if ((current_column>1) && (result>2)) {
-			if ((current_state->board[current_column - 1][result] == player &&
+	}
+	if ((current_column>1) && (result>2)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column - 1][result] == player &&
+			current_state->board[current_column - 2][result] == player &&
+			current_state->board[current_column - 1][result - 1] == player &&
+			current_state->board[current_column - 2][result - 2] == player) ||
+			(current_state->board[current_column][result] == player &&
+				current_state->board[current_column - 1][result] == player &&
 				current_state->board[current_column - 2][result] == player &&
 				current_state->board[current_column - 1][result - 1] == player &&
-				current_state->board[current_column - 2][result - 2] == player) ||
-				(	current_state->board[current_column - 1][result] == player &&
-					current_state->board[current_column - 2][result] == player &&
-					current_state->board[current_column - 1][result - 1] == player &&
-					current_state->board[current_column][result - 2] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+				current_state->board[current_column][result - 2] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 1) && (result>0) && (result<size_y - 1)) {
-			if ((current_state->board[current_column - 1][result + 1] == player &&
+	}
+	if ((current_column>0) && (current_column<7 - 1) && (result>0) && (result<size_y - 1)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column - 1][result + 1] == player &&
+			current_state->board[current_column][result + 1] == player &&
+			current_state->board[current_column + 1][result + 1] == player &&
+			current_state->board[current_column - 1][result - 1] == player) ||
+			(current_state->board[current_column][result] == player &&
+				current_state->board[current_column - 1][result + 1] == player &&
 				current_state->board[current_column][result + 1] == player &&
 				current_state->board[current_column + 1][result + 1] == player &&
-				current_state->board[current_column - 1][result - 1] == player) ||
-				(	current_state->board[current_column - 1][result + 1] == player &&
-					current_state->board[current_column][result + 1] == player &&
-					current_state->board[current_column + 1][result + 1] == player &&
-					current_state->board[current_column + 1][result - 1] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+				current_state->board[current_column + 1][result - 1] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 2) && (result<size_y - 2)) {
-			if ((current_state->board[current_column][result + 2] == player &&
-				current_state->board[current_column + 1][result + 2] == player &&
-				current_state->board[current_column + 2][result + 2] == player &&
-				current_state->board[current_column + 1][result + 1] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+	}
+	if ((current_column>0) && (current_column<7 - 2) && (result<size_y - 2)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column][result + 2] == player &&
+			current_state->board[current_column + 1][result + 2] == player &&
+			current_state->board[current_column + 2][result + 2] == player &&
+			current_state->board[current_column + 1][result + 1] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		if ((current_column>1) && (result<size_y - 2)) {
-			if ((current_state->board[current_column][result + 2] == player &&
-				current_state->board[current_column - 1][result + 2] == player &&
-				current_state->board[current_column - 2][result + 2] == player &&
-				current_state->board[current_column - 1][result + 1] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+	}
+	if ((current_column>1) && (result<size_y - 2)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column][result + 2] == player &&
+			current_state->board[current_column - 1][result + 2] == player &&
+			current_state->board[current_column - 2][result + 2] == player &&
+			current_state->board[current_column - 1][result + 1] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
+	}
 
-		if ((current_column<7 - 2) && (result<size_y - 2)) {
-			if ((current_state->board[current_column + 1][result] == player &&
+	if ((current_column<7 - 2) && (result<size_y - 2)) { 
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result] == player &&
+			current_state->board[current_column + 2][result] == player &&
+			current_state->board[current_column + 1][result + 1] == player &&
+			current_state->board[current_column][result + 2] == player) ||
+			(current_state->board[current_column][result] == player &&
+				current_state->board[current_column + 1][result] == player &&
 				current_state->board[current_column + 2][result] == player &&
 				current_state->board[current_column + 1][result + 1] == player &&
-				current_state->board[current_column][result + 2] == player) ||
-				(	current_state->board[current_column + 1][result] == player &&
-					current_state->board[current_column + 2][result] == player &&
-					current_state->board[current_column + 1][result + 1] == player &&
-					current_state->board[current_column + 2][result + 2] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+				current_state->board[current_column + 2][result + 2] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		if ((current_column<7 - 1) && (current_column>0) && (result<size_y - 2)) {
-			if ((current_state->board[current_column - 1][result] == player &&
+	}
+	if ((current_column<7 - 1) && (current_column>0) && (result<size_y - 2)) {
+		if ((current_state->board[current_column - 1][result] == player &&
+			current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result] == player &&
+			current_state->board[current_column][result + 1] == player &&
+			current_state->board[current_column - 1][result + 2] == player) ||
+			(current_state->board[current_column - 1][result] == player &&
+				current_state->board[current_column][result] == player &&
 				current_state->board[current_column + 1][result] == player &&
 				current_state->board[current_column][result + 1] == player &&
-				current_state->board[current_column - 1][result + 2] == player) ||
-				(current_state->board[current_column - 1][result] == player &&
-						current_state->board[current_column + 1][result] == player &&
-					current_state->board[current_column][result + 1] == player &&
-					current_state->board[current_column + 1][result + 2] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+				current_state->board[current_column + 1][result + 2] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		if ((current_column>1) && (result<size_y - 2)) {
-			if ((current_state->board[current_column - 1][result] == player &&
+	}
+	if ((current_column>1) && (result<size_y - 2)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column - 1][result] == player &&
+			current_state->board[current_column - 2][result] == player &&
+			current_state->board[current_column - 1][result + 1] == player &&
+			current_state->board[current_column - 2][result + 2] == player) ||
+			(current_state->board[current_column][result] == player &&
+				current_state->board[current_column - 1][result] == player &&
 				current_state->board[current_column - 2][result] == player &&
 				current_state->board[current_column - 1][result + 1] == player &&
-				current_state->board[current_column - 2][result + 2] == player) ||
-				(	current_state->board[current_column - 1][result] == player &&
-					current_state->board[current_column - 2][result] == player &&
-					current_state->board[current_column - 1][result + 1] == player &&
-					current_state->board[current_column][result + 2] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+				current_state->board[current_column][result + 2] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 1) && (result>0) && (result<size_y - 1)) {
-			if ((current_state->board[current_column - 1][result - 1] == player &&
+	}
+	if ((current_column>0) && (current_column<7 - 1) && (result>0) && (result<size_y - 1)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column - 1][result - 1] == player &&
+			current_state->board[current_column][result - 1] == player &&
+			current_state->board[current_column + 1][result - 1] == player &&
+			current_state->board[current_column - 1][result + 1] == player) ||
+			(current_state->board[current_column][result] == player &&
+				current_state->board[current_column - 1][result - 1] == player &&
 				current_state->board[current_column][result - 1] == player &&
 				current_state->board[current_column + 1][result - 1] == player &&
-				current_state->board[current_column - 1][result + 1] == player) ||
-				(	current_state->board[current_column - 1][result - 1] == player &&
-					current_state->board[current_column][result - 1] == player &&
-					current_state->board[current_column + 1][result - 1] == player &&
-					current_state->board[current_column + 1][result + 1] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+				current_state->board[current_column + 1][result + 1] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 2) && (result>1)) {
-			if ((current_state->board[current_column][result - 2] == player &&
-				current_state->board[current_column + 1][result - 2] == player &&
-				current_state->board[current_column + 2][result - 2] == player &&
-				current_state->board[current_column + 1][result - 1] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+	}
+	if ((current_column>0) && (current_column<7 - 2) && (result>1)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column][result - 2] == player &&
+			current_state->board[current_column + 1][result - 2] == player &&
+			current_state->board[current_column + 2][result - 2] == player &&
+			current_state->board[current_column + 1][result - 1] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		if ((current_column>1) && (result>1)) {
-			if ((current_state->board[current_column][result - 2] == player &&
-				current_state->board[current_column - 1][result - 2] == player &&
-				current_state->board[current_column - 2][result - 2] == player &&
-				current_state->board[current_column - 1][result - 1] == player)) {
-				value[i] += 100;
-				printf("7 exits %d\n", i);
-			}
+	}
+	if ((current_column>1) && (result>1)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column][result - 2] == player &&
+			current_state->board[current_column - 1][result - 2] == player &&
+			current_state->board[current_column - 2][result - 2] == player &&
+			current_state->board[current_column - 1][result - 1] == player)) {
+			value[i] += 100;
+			printf("7 exists %d\n", i);
 		}
-		//상대방의 가로 또는 대각선으로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 80점
-		if ((current_column<7 - 2) && (result>2)) {
-			if ((current_state->board[current_column + 1][result] == another_player &&
+	}
+	//상대방의 가로 또는 대각선으로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 80점
+	if ((current_column<7 - 2) && (result>2)) {
+		if ((
+			current_state->board[current_column + 1][result] == another_player &&
+			current_state->board[current_column + 2][result] == another_player &&
+			current_state->board[current_column + 1][result - 1] == another_player &&
+			current_state->board[current_column][result - 2] == another_player) ||
+			(
+				current_state->board[current_column + 1][result] == another_player &&
 				current_state->board[current_column + 2][result] == another_player &&
 				current_state->board[current_column + 1][result - 1] == another_player &&
-				current_state->board[current_column][result - 2] == another_player) ||
-				(	current_state->board[current_column + 1][result] == another_player &&
-					current_state->board[current_column + 2][result] == another_player &&
-					current_state->board[current_column + 1][result - 1] == another_player &&
-					current_state->board[current_column + 2][result - 2] == another_player)) {
-				value[i] += 80;
-				printf("1 block another player %d\n", i);
-			}
+				current_state->board[current_column + 2][result - 2] == another_player)) {
+			value[i] += 80;
+			printf("1 block another player %d\n", i);
 		}
-		if ((current_column<7 - 1) && (current_column>0) && (result>2)) {
-			if ((current_state->board[current_column - 1][result] == another_player &&
+	}
+	if ((current_column<7 - 1) && (current_column>0) && (result>2)) {
+		if ((current_state->board[current_column - 1][result] == another_player &&
+			
+			current_state->board[current_column + 1][result] == another_player &&
+			current_state->board[current_column][result - 1] == another_player &&
+			current_state->board[current_column - 1][result - 2] == another_player) ||
+			(current_state->board[current_column - 1][result] == another_player &&
+				
 				current_state->board[current_column + 1][result] == another_player &&
 				current_state->board[current_column][result - 1] == another_player &&
-				current_state->board[current_column - 1][result - 2] == another_player) ||
-				(current_state->board[current_column - 1][result] == another_player &&
-						current_state->board[current_column + 1][result] == another_player &&
-					current_state->board[current_column][result - 1] == another_player &&
-					current_state->board[current_column + 1][result - 2] == another_player)) {
-				value[i] += 80;
-				printf("2 block another player %d\n", i);
-			}
+				current_state->board[current_column + 1][result - 2] == another_player)) {
+			value[i] += 80;
+			printf("2 block another player %d\n", i);
 		}
-		if ((current_column>1) && (result>2)) {
-			if ((current_state->board[current_column - 1][result] == another_player &&
+	}
+	if ((current_column>1) && (result>2)) {
+		if ((
+			current_state->board[current_column - 1][result] == another_player &&
+			current_state->board[current_column - 2][result] == another_player &&
+			current_state->board[current_column - 1][result - 1] == another_player &&
+			current_state->board[current_column - 2][result - 2] == another_player)
+			||
+			(
+				current_state->board[current_column - 1][result] == another_player &&
 				current_state->board[current_column - 2][result] == another_player &&
 				current_state->board[current_column - 1][result - 1] == another_player &&
-				current_state->board[current_column - 2][result - 2] == another_player) ||
-				(	current_state->board[current_column - 1][result] == another_player &&
-					current_state->board[current_column - 2][result] == another_player &&
-					current_state->board[current_column - 1][result - 1] == another_player &&
-					current_state->board[current_column][result - 2] == another_player)) {
-				value[i] += 80;
-				printf("3 block another player %d\n", i);
-			}
+				current_state->board[current_column][result - 2] == another_player)) {
+			value[i] += 80;
+			printf("3 block another player %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 1) && (result>0) && (result<size_y - 1)) {
-			if ((current_state->board[current_column - 1][result + 1] == another_player &&
+	}
+	if ((current_column>0) && (current_column<7 - 1) && (result>0) && (result<size_y - 1)) {
+		if ((
+			current_state->board[current_column - 1][result + 1] == another_player &&
+			current_state->board[current_column][result + 1] == another_player &&
+			current_state->board[current_column + 1][result + 1] == another_player &&
+			current_state->board[current_column - 1][result - 1] == another_player)
+			||
+			(
+				current_state->board[current_column - 1][result + 1] == another_player &&
 				current_state->board[current_column][result + 1] == another_player &&
 				current_state->board[current_column + 1][result + 1] == another_player &&
-				current_state->board[current_column - 1][result - 1] == another_player) ||
-				(	current_state->board[current_column - 1][result + 1] == another_player &&
-					current_state->board[current_column][result + 1] == another_player &&
-					current_state->board[current_column + 1][result + 1] == another_player &&
-					current_state->board[current_column + 1][result - 1] == another_player)) {
-				value[i] += 80;
-				printf("4 block another player %d\n", i);
-			}
+				current_state->board[current_column + 1][result - 1] == another_player)) {
+			value[i] += 80;
+			printf("4 block another player %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 2) && (result<size_y - 2)) {
-			if (((current_state->board[current_column][result + 2] == another_player) &&
-				(current_state->board[current_column + 1][result + 2] == another_player) &&
-				(current_state->board[current_column + 2][result + 2] == another_player) &&
-				(current_state->board[current_column + 1][result + 1] == another_player))) {
-				value[i] += 80;
-				printf("5 block another player %d\n", i);
-			}
+	}
+	if ((current_column>0) && (current_column<7 - 2) && (result<size_y - 2)) {
+		if ((
+			(current_state->board[current_column][result + 2] == another_player) &&
+			(current_state->board[current_column + 1][result + 2] == another_player) &&
+			(current_state->board[current_column + 2][result + 2] == another_player) &&
+			(current_state->board[current_column + 1][result + 1] == another_player))) {
+			value[i] += 80;
+			printf("5 block another player %d\n", i);
 		}
-		if ((current_column>1) && (result<size_y - 2)) {
-			if ((current_state->board[current_column][result + 2] == another_player &&
-				current_state->board[current_column - 1][result + 2] == another_player &&
-				current_state->board[current_column - 2][result + 2] == another_player &&
-				current_state->board[current_column - 1][result + 1] == another_player)) {
-				value[i] += 80;
-				printf("6 block another player %d\n", i);
-			}
+	}
+	if ((current_column>1) && (result<size_y - 2)) {
+		if ((
+			current_state->board[current_column][result + 2] == another_player &&
+			current_state->board[current_column - 1][result + 2] == another_player &&
+			current_state->board[current_column - 2][result + 2] == another_player &&
+			current_state->board[current_column - 1][result + 1] == another_player)) {
+			value[i] += 80;
+			printf("6 block another player %d\n", i);
 		}
+	}
 
-		if ((current_column<7 - 2) && (result<size_y - 2)) {
-			if ((current_state->board[current_column + 1][result] == another_player &&
-				current_state->board[current_column + 2][result] == another_player &&
-				current_state->board[current_column + 1][result + 1] == another_player &&
-				current_state->board[current_column][result + 2] == another_player) ||
-
-				(current_state->board[current_column + 1][result] == another_player &&
+	if ((current_column<7 - 2) && (result<size_y - 2)) {
+		if ((
+			current_state->board[current_column + 1][result] == another_player &&
+			current_state->board[current_column + 2][result] == another_player &&
+			current_state->board[current_column + 1][result + 1] == another_player &&
+			current_state->board[current_column][result + 2] == another_player) ||
+			(
+				current_state->board[current_column + 1][result] == another_player &&
 				current_state->board[current_column + 2][result] == another_player &&
 				current_state->board[current_column + 1][result + 1] == another_player &&
 				current_state->board[current_column + 2][result + 2] == another_player)) {
-				value[i] += 80;
-				printf("7 block another player %d\n", i);
-			}
+			value[i] += 80;
+			printf("7 block another player %d\n", i);
 		}
-		if ((current_column<7 - 1) && (current_column>0) && (result<size_y - 2)) {
-			if ((current_state->board[current_column - 1][result] == another_player &&
+	}
+	if ((current_column<7 - 1) && (current_column>0) && (result<size_y - 2)) {
+		if ((
+			
+			current_state->board[current_column + 1][result] == another_player &&
+			current_state->board[current_column][result + 1] == another_player &&
+			current_state->board[current_column - 1][result + 2] == another_player) ||
+			(current_state->board[current_column - 1][result] == another_player &&
+				
 				current_state->board[current_column + 1][result] == another_player &&
 				current_state->board[current_column][result + 1] == another_player &&
-				current_state->board[current_column - 1][result + 2] == another_player) ||
-				(current_state->board[current_column - 1][result] == another_player &&
-						current_state->board[current_column + 1][result] == another_player &&
-					current_state->board[current_column][result + 1] == another_player &&
-					current_state->board[current_column + 1][result + 2] == another_player)) {
-				value[i] += 80;
-				printf("8 block another player %d\n", i);
-			}
+				current_state->board[current_column + 1][result + 2] == another_player)) {
+			value[i] += 80;
+			printf("8 block another player %d\n", i);
 		}
-		if ((current_column>1) && (result<size_y - 2)) {
-			if ((current_state->board[current_column - 1][result] == another_player &&
+	}
+	if ((current_column>1) && (result<size_y - 2)) {
+		if ((
+			current_state->board[current_column - 1][result] == another_player &&
+			current_state->board[current_column - 2][result] == another_player &&
+			current_state->board[current_column - 1][result + 1] == another_player &&
+			current_state->board[current_column - 2][result + 2] == another_player) ||
+			(
+				current_state->board[current_column - 1][result] == another_player &&
 				current_state->board[current_column - 2][result] == another_player &&
 				current_state->board[current_column - 1][result + 1] == another_player &&
-				current_state->board[current_column - 2][result + 2] == another_player) ||
-				(	current_state->board[current_column - 1][result] == another_player &&
-					current_state->board[current_column - 2][result] == another_player &&
-					current_state->board[current_column - 1][result + 1] == another_player &&
-					current_state->board[current_column][result + 2] == another_player)) {
-				value[i] += 80;
-				printf("9 block another player %d\n", i);
-			}
+				current_state->board[current_column][result + 2] == another_player)) {
+			value[i] += 80;
+			printf("9 block another player %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 1) && (result>0) && (result<size_y - 1)) {
-			if ((current_state->board[current_column - 1][result - 1] == another_player &&
+	}
+	if ((current_column>0) && (current_column<7 - 1) && (result>0) && (result<size_y - 1)) {
+		if ((
+			current_state->board[current_column - 1][result - 1] == another_player &&
+			current_state->board[current_column][result - 1] == another_player &&
+			current_state->board[current_column + 1][result - 1] == another_player &&
+			current_state->board[current_column - 1][result + 1] == another_player) ||
+			(
+				current_state->board[current_column - 1][result - 1] == another_player &&
 				current_state->board[current_column][result - 1] == another_player &&
 				current_state->board[current_column + 1][result - 1] == another_player &&
-				current_state->board[current_column - 1][result + 1] == another_player) ||
-				(	current_state->board[current_column - 1][result - 1] == another_player &&
-					current_state->board[current_column][result - 1] == another_player &&
-					current_state->board[current_column + 1][result - 1] == another_player &&
-					current_state->board[current_column + 1][result + 1] == another_player)) {
-				value[i] += 80;
-				printf("10 block another player %d\n", i);
-			}
+				current_state->board[current_column + 1][result + 1] == another_player)) {
+			value[i] += 80;
+			printf("10 block another player %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 2) && (result>1)) {
-			if ((current_state->board[current_column][result - 2] == another_player &&
-				current_state->board[current_column + 1][result - 2] == another_player &&
-				current_state->board[current_column + 2][result - 2] == another_player &&
-				current_state->board[current_column + 1][result - 1] == another_player)) {
-				value[i] += 80;
-				printf("11 block another player %d\n", i);
-			}
+	}
+	if ((current_column>0) && (current_column<7 - 2) && (result>1)) {
+		if ((
+			current_state->board[current_column][result - 2] == another_player &&
+			current_state->board[current_column + 1][result - 2] == another_player &&
+			current_state->board[current_column + 2][result - 2] == another_player &&
+			current_state->board[current_column + 1][result - 1] == another_player)) {
+			value[i] += 80;
+			printf("11 block another player %d\n", i);
 		}
-		if ((current_column>1) && (result>1)) {
-			if ((current_state->board[current_column][result - 2] == another_player &&
-				current_state->board[current_column - 1][result - 2] == another_player &&
-				current_state->board[current_column - 2][result - 2] == another_player &&
-				current_state->board[current_column - 1][result - 1] == another_player)) {
-				value[i] += 80;
-				printf("12 block another player %d\n", i);
-			}
+	}
+	if ((current_column>1) && (result>1)) {
+		if ((
+			current_state->board[current_column][result - 2] == another_player &&
+			current_state->board[current_column - 1][result - 2] == another_player &&
+			current_state->board[current_column - 2][result - 2] == another_player &&
+			current_state->board[current_column - 1][result - 1] == another_player)) {
+			value[i] += 80;
+			printf("12 block another player %d\n", i);
 		}
-		//가로 또는 대각선으로 세 개의 돌이 연속하여 존재하게 될 경우 60점
-		//가로
-		if ((current_column<7 - 2)) {
-			if ((current_state->board[current_column + 1][result] == player &&
-				current_state->board[current_column + 2][result] == player)) {
-				value[i] += 60;
-				printf("3 stones horizontally exist %d\n", i);
-			}
+	}
+	//가로 또는 대각선으로 세 개의 돌이 연속하여 존재하게 될 경우 60점
+	//가로
+	if ((current_column<7 - 2)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result] == player &&
+			current_state->board[current_column + 2][result] == player)) {
+			value[i] += 60;
+			printf("3 stones horizontally exist %d\n", i);
 		}
-		if ((current_column<7 - 1) && (current_column>0)) {
-			if ((current_state->board[current_column + 1][result] == player &&
-				current_state->board[current_column - 1][result] == player)) {
-				value[i] += 60;
-				printf("3 stones horizontally exist %d\n", i);
-			}
+	}
+	if ((current_column<7 - 1) && (current_column>0)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result] == player &&
+			current_state->board[current_column - 1][result] == player)) {
+			value[i] += 60;
+			printf("3 stones horizontally exist %d\n", i);
 		}
-		if ((current_column<7) && (current_column>1)) {
-			if ((current_state->board[current_column - 1][result] == player &&
-				current_state->board[current_column - 2][result] == player)) {
-				value[i] += 60; //-1 -2 아닐까
-				printf("3 stones horizontally exist %d\n", i);
-			}
+	}
+	if ((current_column<7) && (current_column>1)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column - 1][result] == player &&
+			current_state->board[current_column - 2][result] == player)) {
+			value[i] += 60; //-1 -2 아닐까
+			printf("3 stones horizontally exist %d\n", i);
 		}
-		// 대각선
-		if ((current_column<7 - 2) && (result<size_y - 2)) {
-			if ((current_state->board[current_column + 1][result + 1] == player &&
-				current_state->board[current_column + 2][result + 2] == player)) {
-				value[i] += 60;
-				printf("3 stones horizontally exist %d\n", i);
-			}
+	}
+	// 대각선
+	if ((current_column<7 - 2) && (result<size_y - 2)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result + 1] == player &&
+			current_state->board[current_column + 2][result + 2] == player)) {
+			value[i] += 60;
+			printf("3 stones horizontally exist %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 1) && (result>1) && (result<size_y - 1)) {
-			if ((current_state->board[current_column + 1][result + 1] == player &&
-				current_state->board[current_column - 1][result - 1] == player)) {
-				value[i] += 60;
-				printf("3 stones horizontally exist %d\n", i);
-			}
+	}
+	if ((current_column>0) && (current_column<7 - 1) && (result>1) && (result<size_y - 1)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result + 1] == player &&
+			current_state->board[current_column - 1][result - 1] == player)) {
+			value[i] += 60;
+			printf("3 stones horizontally exist %d\n", i);
 		}
-		if ((current_column>1) && (result>2)) {
-			if ((current_state->board[current_column - 1][result - 1] == player &&
-				current_state->board[current_column - 2][result - 2] == player)) {
-				value[i] += 60;
-				printf("3 stones horizontally exist %d\n", i);
-			}
+	}
+	if ((current_column>1) && (result>2)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column - 1][result - 1] == player &&
+			current_state->board[current_column - 2][result - 2] == player)) {
+			value[i] += 60;
+			printf("3 stones horizontally exist %d\n", i);
 		}
+	}
 
-		// 반대 대각선
-		if ((current_column<7 - 2) && (result>2)) {
-			if ((current_state->board[current_column + 1][result - 1] == player &&
-				current_state->board[current_column + 2][result - 2] == player)) {
-				value[i] += 60;
-				printf("3 stones diagonally exist %d\n", i);
-			}
+	// 반대 대각선
+	if ((current_column<7 - 2) && (result>2)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result - 1] == player &&
+			current_state->board[current_column + 2][result - 2] == player)) {
+			value[i] += 60;
+			printf("3 stones diagonally exist %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 1) && (result>1) && (result<size_y - 1)) {
-			if ((current_state->board[current_column + 1][result - 1] == player &&
-				current_state->board[current_column - 1][result + 1] == player)) {
-				value[i] += 60;
-				printf("3 stones diagonally exist %d\n", i);
-			}
+	}
+	if ((current_column>0) && (current_column<7 - 1) && (result>1) && (result<size_y - 1)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result - 1] == player &&
+			current_state->board[current_column - 1][result + 1] == player)) {
+			value[i] += 60;
+			printf("3 stones diagonally exist %d\n", i);
 		}
-		if ((current_column>1) && (result<size_y - 2)) {
-			if ((current_state->board[current_column - 1][result + 1] == player &&
-				current_state->board[current_column - 2][result + 2] == player)) {
-				value[i] += 60;
-				printf("3 stones diagonally exist %d\n", i);
-			}
+	}
+	if ((current_column>1) && (result<size_y - 2)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column - 1][result + 1] == player &&
+			current_state->board[current_column - 2][result + 2] == player)) {
+			value[i] += 60;
+			printf("3 stones diagonally exist %d\n", i);
 		}
-		//상대방의 가로나 대각선 저지
-		//가로
-		if ((current_column<7 - 2)) {
-			if ((current_state->board[current_column + 1][result] == another_player &&
-				current_state->board[current_column + 2][result] == another_player)) {
-				value[i] += 50;
-				printf("1 block another player's 3-stones %d\n", i);
-			}
+	}
+	//상대방의 가로나 대각선 저지
+	//가로
+	if ((current_column<7 - 2)) {
+		if ((
+			current_state->board[current_column + 1][result] == another_player &&
+			current_state->board[current_column + 2][result] == another_player)) {
+			value[i] += 50;
+			printf("1 block another player's 3-stones %d\n", i);
 		}
-		if ((current_column<7 - 1) && (current_column>0)) {
-			if ((current_state->board[current_column + 1][result] == another_player &&
-				current_state->board[current_column - 1][result] == another_player)) {
-				value[i] += 50;
-				printf("2 block another player's 3-stones %d\n", i);
-			}
+	}
+	if ((current_column<7 - 1) && (current_column>0)) {
+		if ((
+			current_state->board[current_column + 1][result] == another_player &&
+			current_state->board[current_column - 1][result] == another_player)) {
+			value[i] += 50;
+			printf("2 block another player's 3-stones %d\n", i);
 		}
-		if ((current_column<7) && (current_column>1)) {
-			if ((current_state->board[current_column - 1][result] == another_player &&
-				current_state->board[current_column - 2][result] == another_player)) {
-				value[i] += 50;
-				printf("3 block another player's 3-stones %d\n", i);
-			}
+	}
+	if ((current_column<7) && (current_column>1)) {
+		if ((
+			current_state->board[current_column - 1][result] == another_player &&
+			current_state->board[current_column - 2][result] == another_player)) {
+			value[i] += 50;
+			printf("3 block another player's 3-stones %d\n", i);
 		}
-		// /대각선
-		if ((current_column<7 - 2) && (result<size_y - 2)) {
-			if ((current_state->board[current_column + 1][result + 1] == another_player &&
-				current_state->board[current_column + 2][result + 2] == another_player)) {
-				value[i] += 50;
-				printf("1 block another player's diagonal 3-stones %d\n", i);
-			}
+	}
+	// /대각선
+	if ((current_column<7 - 2) && (result<size_y - 2)) {
+		if ((
+			current_state->board[current_column + 1][result + 1] == another_player &&
+			current_state->board[current_column + 2][result + 2] == another_player)) {
+			value[i] += 50;
+			printf("1 block another player's diagonal 3-stones %d\n", i);
 		}
-		if ((current_column>0) && (current_column<7 - 1) && (result>1) && (result<size_y - 1)) {
-			if ((current_state->board[current_column + 1][result + 1] == another_player &&
-				current_state->board[current_column - 1][result - 1] == another_player)) {
-				value[i] += 50;
-				printf("2 block another player's diagonal 3-stones %d\n", i);
-			}
+	}
+	if ((current_column>0) && (current_column<7 - 1) && (result>1) && (result<size_y - 1)) {
+		if ((
+			current_state->board[current_column + 1][result + 1] == another_player &&
+			current_state->board[current_column - 1][result - 1] == another_player)) {
+			value[i] += 50;
+			printf("2 block another player's diagonal 3-stones %d\n", i);
 		}
-		if ((current_column>1) && (result>2)) {
-			if ((current_state->board[current_column - 1][result - 1] == another_player &&
-				current_state->board[current_column - 2][result - 2] == another_player)) {
-				printf("3 block another player's diagonal 3-stones %d\n", i);
-				value[i] += 50;
-			}
+	}
+	if ((current_column>1) && (result>2)) {
+		if ((
+			current_state->board[current_column - 1][result - 1] == another_player &&
+			current_state->board[current_column - 2][result - 2] == another_player)) {
+			printf("3 block another player's diagonal 3-stones %d\n", i);
+			value[i] += 50;
 		}
+	}
 
-		// 반대 대각선
-		if ((current_column<7 - 2) && (result>2)) {
-			if ((current_state->board[current_column + 1][result - 1] == another_player &&
-				current_state->board[current_column + 2][result - 2] == another_player)) {
-				printf("4 block another player's diagonal 3-stones %d\n", i);
-				value[i] += 50;
-			}
+	// 반대 대각선
+	if ((current_column<7 - 2) && (result>2)) {
+		if ((
+			current_state->board[current_column + 1][result - 1] == another_player &&
+			current_state->board[current_column + 2][result - 2] == another_player)) {
+			printf("4 block another player's diagonal 3-stones %d\n", i);
+			value[i] += 50;
 		}
-		if ((current_column>0) && (current_column<7 - 1) && (result>1) && (result<size_y - 1)) {
-			if ((current_state->board[current_column + 1][result - 1] == another_player &&
-				current_state->board[current_column - 1][result + 1] == another_player)) {
-				printf("5 block another player's diagonal 3-stones %d\n", i);
-				value[i] += 50;
-			}
+	}
+	if ((current_column>0) && (current_column<7 - 1) && (result>1) && (result<size_y - 1)) {
+		if ((
+			current_state->board[current_column + 1][result - 1] == another_player &&
+			current_state->board[current_column - 1][result + 1] == another_player)) {
+			printf("5 block another player's diagonal 3-stones %d\n", i);
+			value[i] += 50;
 		}
-		if ((current_column>1) && (result<size_y - 2)) {
-			if ((current_state->board[current_column - 1][result + 1] == another_player &&
-				current_state->board[current_column - 2][result + 2] == another_player)) {
-				printf("6 block another player's diagonal 3-stones %d\n", i);
-				value[i] += 50;
-			}
+	}
+	if ((current_column>1) && (result<size_y - 2)) {
+		if ((
+			current_state->board[current_column - 1][result + 1] == another_player &&
+			current_state->board[current_column - 2][result + 2] == another_player)) {
+			printf("6 block another player's diagonal 3-stones %d\n", i);
+			value[i] += 50;
 		}
+	}
 
-		// 소영이 파트
-		//상대방의 세로로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 40점
-		if ((result<4)) {
-			if ((current_state->board[current_column][result + 1]) == another_player &&
-				(current_state->board[current_column][result + 2]) == (another_player)) {
-				printf("1 block another player's vertical 3-stones %d\n", i);
-				value[i] += 40;
-			}
+	// 소영이 파트
+	//상대방의 세로로 세 개의 돌이 연속할 수 있는 경우를 저지하게 될 경우 40점
+	if ((result<4)) {
+		if (
+			(current_state->board[current_column][result + 1]) == another_player &&
+			(current_state->board[current_column][result + 2]) == (another_player)) {
+			printf("1 block another player's vertical 3-stones %d\n", i);
+			value[i] += 40;//
 		}
+	}
 
-		if ((result<5) && (result>0)) {
-			if ((current_state->board[current_column][result - 1] == another_player &&
-				current_state->board[current_column][result + 1] == another_player)) {
-				printf("2 block another player's vertical 3-stones %d\n", i);
-				value[i] += 40;
-			}
+	if ((result<5) && (result>0)) {
+		if ((
+			current_state->board[current_column][result - 1] == another_player &&
+			current_state->board[current_column][result + 1] == another_player)) {
+			printf("2 block another player's vertical 3-stones %d\n", i);
+			value[i] += 40;//
 		}
+	}
 
-		if ((result<6) && (result>1)) {
-			if ((current_state->board[current_column][result - 1] == another_player &&
-				current_state->board[current_column][result - 2] == another_player)) {
-				printf("3 block another player's vertical 3-stones %d\n", i);
-				value[i] += 40;
-				printf("player: %d, another player: %d\n", player, another_player);
-			}
+	if ((result<6) && (result>1)) {
+		if ((
+			current_state->board[current_column][result - 1] == another_player &&
+			current_state->board[current_column][result - 2] == another_player)) {
+			printf("3 block another player's vertical 3-stones %d\n", i);
+			value[i] += 40;//
 		}
+	}
 
-		//두개의 돌이 가로로 붙어 있고, 아래쪽이 벽면인 경우의 좌우 40점
-		if ((current_column<6) && (result == 0)) {
-			if ((current_state->board[current_column + 1][result] == player)) {
-				printf("2 stones and the floor %d\n", i);
-				value[i] += 40;
-			}
+	//두개의 돌이 가로로 붙어 있고, 아래쪽이 벽면인 경우의 좌우 40점
+	if ((current_column<6) && (result == 0)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column + 1][result] == player)) {
+			printf("2 stones and the floor %d\n", i);
+			value[i] += 40;
 		}
+	}
 
-		if ((current_column>0) && (current_column<7) && (result == 0)) {
-			if ((current_state->board[current_column - 1][result] == player)) {
-				printf("2 stones and the floor %d\n", i);
-				value[i] += 40;
-			}
+	if ((current_column>0) && (current_column<7) && (result == 0)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column - 1][result] == player)) {
+			printf("2 stones and the floor %d\n", i);
+			value[i] += 40;
 		}
+	}
 
-		//세로로 세 개의 돌이 연속하여 존재하게 될 경우  10점
-		if ((result<4)) {
-			if ((current_state->board[current_column][result + 1] == player &&
-				current_state->board[current_column][result + 2] == player)) {
-				printf("3 stones vertically exist %d\n", i);
-				value[i] += 10;
-			}
+	//세로로 세 개의 돌이 연속하여 존재하게 될 경우  10점
+	if ((result<4)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column][result + 1] == player &&
+			current_state->board[current_column][result + 2] == player)) {
+			printf("3 stones vertically exist %d\n", i);
+			value[i] += 10;
 		}
+	}
 
-		if ((result<5) && (result>0)) {
-			if ((current_state->board[current_column][result - 1] == player &&
-				current_state->board[current_column][result + 1] == player)) {
-				printf("3 stones vertically exist %d\n", i);
-				value[i] += 10;
-			}
+	if ((result<5) && (result>0)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column][result - 1] == player &&
+			current_state->board[current_column][result + 1] == player)) {
+			printf("3 stones vertically exist %d\n", i);
+			value[i] += 10;
 		}
+	}
 
-		if ((result<6) && (result>1)) {
-			if ((current_state->board[current_column][result - 1] == player &&
-				current_state->board[current_column][result - 2] == player)) {
-				printf("3 stones vertically exist %d\n", i);
-				value[i] += 10;
-			}
+	if ((result<6) && (result>1)) {
+		if ((current_state->board[current_column][result] == player &&
+			current_state->board[current_column][result - 1] == player &&
+			current_state->board[current_column][result - 2] == player)) {
+			printf("3 stones vertically exist %d\n", i);
+			value[i] += 10;
 		}
+	}
 
-		//가로, 대각선으로 이을수 있는 4칸의 여유가 있을 경우 5점
-		//가로
-		if ((current_column < 4)) {
-			if ((current_state->board[current_column + 1][result] == C4_NONE &&
-				current_state->board[current_column + 2][result] == C4_NONE &&
-				current_state->board[current_column + 3][result] == C4_NONE)) {
-				printf("9 4-padding exists%d\n", i);
-				printf("%d %d \n", current_column, current_state->board[current_column + 3][result]);
-				value[i] += 5;
-			}
+	//가로, 대각선으로 이을수 있는 4칸의 여유가 있을 경우 5점
+	//가로
+	if ((current_column < 4)) {
+		if ((current_state->board[current_column + 1][result] == C4_NONE &&
+			current_state->board[current_column + 2][result] == C4_NONE &&
+			current_state->board[current_column + 3][result] == C4_NONE)) {
+			printf("9 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
+	}
 
-		if ((current_column < 7) && (current_column>2)) {
-			if ((current_state->board[current_column - 1][result] == C4_NONE &&
-				current_state->board[current_column - 2][result] == C4_NONE &&
-				current_state->board[current_column - 3][result] == C4_NONE)) {
-				printf("10 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	if ((current_column < 7) && (current_column>2)) {
+		if ((current_state->board[current_column - 1][result] == C4_NONE &&
+			current_state->board[current_column - 2][result] == C4_NONE &&
+			current_state->board[current_column - 3][result] == C4_NONE)) {
+			printf("10 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
+	}
 
-		if ((current_column < 5) && (current_column>0)) {
-			if ((current_state->board[current_column - 1][result] == C4_NONE &&
-				current_state->board[current_column + 1][result] == C4_NONE &&
-				current_state->board[current_column + 2][result] == C4_NONE)) {
-				printf("11 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	if ((current_column < 5) && (current_column>0)) {
+		if ((current_state->board[current_column - 1][result] == C4_NONE &&
+			current_state->board[current_column + 1][result] == C4_NONE &&
+			current_state->board[current_column + 2][result] == C4_NONE)) {
+			printf("11 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
+	}
 
-		if ((current_column < 6) && (current_column>3)) {
-			if ((current_state->board[current_column - 2][result] == C4_NONE &&
-				current_state->board[current_column - 1][result] == C4_NONE &&
-				current_state->board[current_column + 1][result] == C4_NONE)) {
-				printf("12 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	if ((current_column < 6) && (current_column>3)) {
+		if ((current_state->board[current_column - 2][result] == C4_NONE &&
+			current_state->board[current_column - 1][result] == C4_NONE &&
+			current_state->board[current_column + 1][result] == C4_NONE)) {
+			printf("12 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
-		//오른쪽 위 대각선
-		if ((current_column<4) && (result<3)) {
-			if ((current_state->board[current_column + 1][result + 1] == C4_NONE &&
-				current_state->board[current_column + 2][result + 2] == C4_NONE &&
-				current_state->board[current_column + 3][result + 3] == C4_NONE)) {
-				printf("1 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	}
+	//오른쪽 위 대각선
+	if ((current_column<4) && (result<3)) {
+		if ((current_state->board[current_column + 1][result + 1] == C4_NONE &&
+			current_state->board[current_column + 2][result + 2] == C4_NONE &&
+			current_state->board[current_column + 3][result + 3] == C4_NONE)) {
+			printf("1 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
+	}
 
-		if ((current_column<7) && (current_column>2) && (result<6) && (result>2)) {
-			if ((current_state->board[current_column - 1][result - 1] == C4_NONE &&
-				current_state->board[current_column - 2][result - 2] == C4_NONE &&
-				current_state->board[current_column - 3][result - 3] == C4_NONE)) {
-				printf("2 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	if ((current_column<7) && (current_column>2) && (result<6) && (result>2)) {
+		if ((current_state->board[current_column - 1][result - 1] == C4_NONE &&
+			current_state->board[current_column - 2][result - 2] == C4_NONE &&
+			current_state->board[current_column - 3][result - 3] == C4_NONE)) {
+			printf("2 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
+	}
 
-		if ((current_column<6) && (current_column>1) && (result<5) && (result>1)) {
-			if ((current_state->board[current_column - 1][result - 1] == C4_NONE &&
-				current_state->board[current_column - 2][result - 2] == C4_NONE &&
-				current_state->board[current_column + 1][result + 1] == C4_NONE)) {
-				printf("3 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	if ((current_column<6) && (current_column>1) && (result<5) && (result>1)) {
+		if ((current_state->board[current_column - 1][result - 1] == C4_NONE &&
+			current_state->board[current_column - 2][result - 2] == C4_NONE &&
+			current_state->board[current_column + 1][result + 1] == C4_NONE)) {
+			printf("3 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
+	}
 
-		if ((current_column<5) && (current_column>0) && (result<4) && (result>0)) {
-			if ((current_state->board[current_column - 1][result - 1] == C4_NONE &&
-				current_state->board[current_column + 2][result + 2] == C4_NONE &&
-				current_state->board[current_column + 1][result + 1] == C4_NONE)) {
-				printf("4 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	if ((current_column<5) && (current_column>0) && (result<4) && (result>0)) {
+		if ((current_state->board[current_column - 1][result - 1] == C4_NONE &&
+			current_state->board[current_column + 2][result + 2] == C4_NONE &&
+			current_state->board[current_column + 1][result + 1] == C4_NONE)) {
+			printf("4 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
-		//왼쪽 위 대각선
-		if ((current_column < 4) && (result>2) && (result<6)) {
-			if ((current_state->board[current_column - 1][result - 1] == C4_NONE &&
-				current_state->board[current_column - 2][result - 2] == C4_NONE &&
-				current_state->board[current_column - 3][result - 3] == C4_NONE)) {
-				printf("5 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	}
+	//왼쪽 위 대각선
+	if ((current_column < 4) && (result>2)&&(result<6)) {
+		if ((current_state->board[current_column - 1][result - 1] == C4_NONE &&
+			current_state->board[current_column - 2][result - 2] == C4_NONE &&
+			current_state->board[current_column - 3][result - 3] == C4_NONE)) {
+			printf("5 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
+	}
 
-		if ((current_column<7) && (current_column>2) && (result<4)) {
-			if ((current_state->board[current_column - 1][result + 1] == C4_NONE &&
-				current_state->board[current_column - 2][result + 2] == C4_NONE &&
-				current_state->board[current_column - 3][result + 3] == C4_NONE)) {
-				printf("6 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	if ((current_column<7) && (current_column>2) && (result<4)) {
+		if ((current_state->board[current_column - 1][result + 1] == C4_NONE &&
+			current_state->board[current_column - 2][result + 2] == C4_NONE &&
+			current_state->board[current_column - 3][result + 3] == C4_NONE)) {
+			printf("6 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
+	}
 
-		if ((current_column<5) && (current_column>0) && (result<5) && (result>1)) {
-			if ((current_state->board[current_column - 1][result + 1] == C4_NONE &&
-				current_state->board[current_column + 2][result - 2] == C4_NONE &&
-				current_state->board[current_column + 1][result - 1] == C4_NONE)) {
-				printf("7 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	if ((current_column<5) && (current_column>0) && (result<5) && (result>1)) {
+		if ((current_state->board[current_column - 1][result + 1] == C4_NONE &&
+			current_state->board[current_column + 2][result - 2] == C4_NONE &&
+			current_state->board[current_column + 1][result - 1] == C4_NONE)) {
+			printf("7 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
+	}
 
-		if ((current_column<6) && (current_column>1) && (result<4) && (result>0)) {
-			if ((current_state->board[current_column - 1][result + 1] == C4_NONE &&
-				current_state->board[current_column - 2][result + 2] == C4_NONE &&
-				current_state->board[current_column + 1][result - 1] == C4_NONE)) {
-				printf("8 4-padding exists%d\n", i);
-				value[i] += 5;
-			}
+	if ((current_column<6) && (current_column>1) && (result<4) && (result>0)) {
+		if ((current_state->board[current_column - 1][result + 1] == C4_NONE &&
+			current_state->board[current_column - 2][result + 2] == C4_NONE &&
+			current_state->board[current_column + 1][result - 1] == C4_NONE)) {
+			printf("8 4-padding exists%d\n", i);
+			value[i] += 5;
 		}
-		//상대방이 내가 둘 수 위에 두어 승리할 수 있는 경우 두지 않음 -200점 ????????
+	}
+	//상대방이 내가 둘 수 위에 두어 승리할 수 있는 경우 두지 않음 -200점 ????????
 
-		pop_state();
-	//}
+	pop_state(); // 점수를 저장 해 놓음  simulate 한 값 지움
+	}
 	printf("\n");
-}
+
 	for (int k = 0; k<7; k++) {
-		printf("value[%d] : %d\n",k, value[k]);
+		printf("value[%d] : %d\n", k, value[k]);
 		if (value[k]>value[value_int])
 			value_int = k;
 	}
