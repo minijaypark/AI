@@ -1451,7 +1451,7 @@ rule(int player) {
 			value[i] += 5;
 		}
 	}
-	//상대방이 내가 둘 수 위에 두어 승리할 수 있는 경우 두지 않음 -200점 ????????
+	
 	printf("\n");
 	pop_state(); // 점수를 저장 해 놓음  simulate 한 값 지움
 	}
